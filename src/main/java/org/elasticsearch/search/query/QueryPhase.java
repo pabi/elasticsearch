@@ -33,6 +33,7 @@ import org.elasticsearch.search.aggregations.AggregationPhase;
 import org.elasticsearch.search.facet.FacetPhase;
 import org.elasticsearch.search.internal.ContextIndexSearcher;
 import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.TransactionContext;
 import org.elasticsearch.search.rescore.RescorePhase;
 import org.elasticsearch.search.rescore.RescoreSearchContext;
 import org.elasticsearch.search.sort.SortParseElement;
@@ -92,7 +93,7 @@ public class QueryPhase implements SearchPhase {
         context.preProcess();
     }
 
-    public void execute(SearchContext searchContext) throws QueryPhaseExecutionException {
+    public void execute(SearchContext searchContext, TransactionContext transactionContext) throws QueryPhaseExecutionException {
         // Pre-process facets and aggregations as late as possible. In the case of a DFS_Q_T_F
         // request, preProcess is called on the DFS phase phase, this is why we pre-process them
         // here to make sure it happens during the QUERY phase
@@ -165,10 +166,10 @@ public class QueryPhase implements SearchPhase {
             searchContext.searcher().finishStage(ContextIndexSearcher.Stage.MAIN_QUERY);
         }
         if (rescore) { // only if we do a regular search
-            rescorePhase.execute(searchContext);
+            rescorePhase.execute(searchContext, null);
         }
-        suggestPhase.execute(searchContext);
-        facetPhase.execute(searchContext);
-        aggregationPhase.execute(searchContext);
+        suggestPhase.execute(searchContext, null);
+        facetPhase.execute(searchContext, null);
+        aggregationPhase.execute(searchContext, null);
     }
 }

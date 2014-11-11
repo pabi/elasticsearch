@@ -77,7 +77,7 @@ public class TopHitsAggregator extends MetricsAggregator implements ScorerAware 
                 docIdsToLoad[i] = topDocs.scoreDocs[i].doc;
             }
             topHitsContext.docIdsToLoad(docIdsToLoad, 0, docIdsToLoad.length);
-            fetchPhase.execute(topHitsContext);
+            fetchPhase.execute(topHitsContext, null);
             FetchSearchResult fetchResult = topHitsContext.fetchResult();
             InternalSearchHit[] internalHits = fetchResult.fetchResult().hits().internalHits();
             for (int i = 0; i < internalHits.length; i++) {

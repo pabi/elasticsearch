@@ -1,0 +1,90 @@
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.elasticsearch.action.transaction;
+
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.search.type.AbstractAsyncAction;
+import org.elasticsearch.action.support.ActionFilters;
+import org.elasticsearch.action.support.HandledTransportAction;
+import org.elasticsearch.cluster.ClusterService;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.search.action.SearchServiceListener;
+import org.elasticsearch.search.action.SearchServiceTransportAction;
+import org.elasticsearch.search.transaction.StartTransactionResult;
+import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportService;
+
+public class TransportStartTransactionAction extends HandledTransportAction<StartTransactionRequest, StartTransactionResponse> {
+
+    private final SearchServiceTransportAction searchService;
+    private final ClusterService clusterService;
+    
+    @Inject
+    public TransportStartTransactionAction(Settings settings, ThreadPool threadPool, TransportService transportService, ActionFilters actionFilters, SearchServiceTransportAction searchService, ClusterService clusterService) {
+        super(settings, StartTransactionAction.NAME, threadPool, transportService, actionFilters);
+        this.searchService = searchService;
+        this.clusterService = clusterService;
+    }
+    
+    @Override
+    public StartTransactionRequest newRequestInstance() {
+        return new StartTransactionRequest();
+    }
+
+    @Override
+    protected void doExecute(StartTransactionRequest request, ActionListener<StartTransactionResponse> listener) {
+        
+        System.out.println("EXECUTE");
+        new AsyncAction(request, listener).start();
+    }
+    
+    private class AsyncAction extends AbstractAsyncAction {
+        
+        private final StartTransactionRequest request;
+        private final ActionListener<StartTransactionResponse> listener;
+        
+        private AsyncAction(StartTransactionRequest request, ActionListener<StartTransactionResponse> listener) {
+            this.request = request;
+            this.listener = listener;
+        }
+
+        public void start() {
+            final DiscoveryNode node = clusterService.state().getNodes().getLocalNode();
+            searchService.sendExecuteStartTransaction(node, request, new SearchServiceListener<StartTransactionResult>() {
+                @Override
+                public void onResult(StartTransactionResult result) {
+                    System.out.println("onResult");
+                    final StartTransactionResponse response = new StartTransactionResponse();
+                    response.setId(result.getId());
+                    listener.onResponse(response);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    System.out.println("onFailure");
+                    listener.onFailure(t);
+                }
+            });
+        }
+    }
+
+}

@@ -800,10 +800,10 @@ public class PercolatorService extends AbstractComponent {
             }
         }
         if (context.facets() != null) {
-            facetPhase.execute(context);
+            facetPhase.execute(context, null);
         }
         if (context.aggregations() != null) {
-            aggregationPhase.execute(context);
+            aggregationPhase.execute(context, null);
         }
     }
 

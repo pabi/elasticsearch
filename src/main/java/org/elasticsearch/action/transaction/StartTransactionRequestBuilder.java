@@ -17,25 +17,21 @@
  * under the License.
  */
 
-package org.elasticsearch.search;
+package org.elasticsearch.action.transaction;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.search.internal.SearchContext;
-import org.elasticsearch.search.internal.TransactionContext;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequestBuilder;
+import org.elasticsearch.client.Client;
 
-import java.util.Map;
+public class StartTransactionRequestBuilder extends ActionRequestBuilder<StartTransactionRequest, StartTransactionResponse, StartTransactionRequestBuilder, Client> {
 
-/**
- *
- */
-public interface SearchPhase {
+    protected StartTransactionRequestBuilder(Client client) {
+        super(client, new StartTransactionRequest());
+    }
 
-    Map<String, ? extends SearchParseElement> parseElements();
+    @Override
+    protected void doExecute(ActionListener<StartTransactionResponse> listener) {
+        client.startTransaction(request, listener);
+    }
 
-    /**
-     * Performs pre processing of the search context before the execute.
-     */
-    void preProcess(SearchContext context);
-
-    void execute(SearchContext context, TransactionContext transactionContext) throws ElasticsearchException;
 }

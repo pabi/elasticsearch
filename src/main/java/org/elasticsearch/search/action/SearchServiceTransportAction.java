@@ -26,6 +26,7 @@ import org.elasticsearch.action.OriginalIndices;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.action.transaction.StartTransactionRequest;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.component.AbstractComponent;
@@ -42,6 +43,7 @@ import org.elasticsearch.search.query.QuerySearchRequest;
 import org.elasticsearch.search.query.QuerySearchResult;
 import org.elasticsearch.search.query.QuerySearchResultProvider;
 import org.elasticsearch.search.query.ScrollQuerySearchResult;
+import org.elasticsearch.search.transaction.StartTransactionResult;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.*;
 
@@ -68,6 +70,7 @@ public class SearchServiceTransportAction extends AbstractComponent {
     public static final String FETCH_ID_ACTION_NAME = "indices:data/read/search[phase/fetch/id]";
     public static final String SCAN_ACTION_NAME = "indices:data/read/search[phase/scan]";
     public static final String SCAN_SCROLL_ACTION_NAME = "indices:data/read/search[phase/scan/scroll]";
+    public static final String START_TRANSACTION_ACTION_NAME = "indices:data/transaction/start";
 
     static final class FreeContextResponseHandler implements TransportResponseHandler<SearchFreeContextResponse> {
 
@@ -134,6 +137,7 @@ public class SearchServiceTransportAction extends AbstractComponent {
         transportService.registerHandler(FETCH_ID_ACTION_NAME, new SearchFetchByIdTransportHandler());
         transportService.registerHandler(SCAN_ACTION_NAME, new SearchScanTransportHandler());
         transportService.registerHandler(SCAN_SCROLL_ACTION_NAME, new SearchScanScrollTransportHandler());
+        transportService.registerHandler(START_TRANSACTION_ACTION_NAME, new StartTransactionTransportHandler());
     }
 
     public void sendFreeContext(DiscoveryNode node, final long contextId, SearchRequest request) {
@@ -545,6 +549,15 @@ public class SearchServiceTransportAction extends AbstractComponent {
             });
         }
     }
+    
+    public void sendExecuteStartTransaction(DiscoveryNode node, final StartTransactionRequest request, final SearchServiceListener<StartTransactionResult> listener) {
+        execute(new Callable<StartTransactionResult>() {
+            @Override
+            public StartTransactionResult call() throws Exception {
+                return searchService.executeStartTransaction(request);
+            }
+        }, listener);
+    }
 
     private <T> void execute(final Callable<? extends T> callable, final SearchServiceListener<T> listener) {
         try {
@@ -944,5 +957,25 @@ public class SearchServiceTransportAction extends AbstractComponent {
         public String executor() {
             return ThreadPool.Names.SEARCH;
         }
+    }
+    
+    private class StartTransactionTransportHandler extends BaseTransportRequestHandler<StartTransactionRequest> {
+
+        @Override
+        public StartTransactionRequest newInstance() {
+            return new StartTransactionRequest();
+        }
+
+        @Override
+        public void messageReceived(StartTransactionRequest request, TransportChannel channel) throws Exception {
+            final StartTransactionResult result = searchService.executeStartTransaction(request);
+            channel.sendResponse(result);
+        }
+
+        @Override
+        public String executor() {
+            return ThreadPool.Names.SEARCH;
+        }
+        
     }
 }

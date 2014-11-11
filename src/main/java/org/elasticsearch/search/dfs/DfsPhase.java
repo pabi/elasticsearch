@@ -32,6 +32,7 @@ import org.elasticsearch.common.collect.HppcMaps;
 import org.elasticsearch.search.SearchParseElement;
 import org.elasticsearch.search.SearchPhase;
 import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.TransactionContext;
 import org.elasticsearch.search.rescore.RescoreSearchContext;
 
 import java.util.AbstractSet;
@@ -60,7 +61,7 @@ public class DfsPhase implements SearchPhase {
     public void preProcess(SearchContext context) {
     }
 
-    public void execute(SearchContext context) {
+    public void execute(SearchContext context, TransactionContext transactionContext) {
         final ObjectOpenHashSet<Term> termsSet = cachedTermsSet.get();
         try {
             if (!context.queryRewritten()) {

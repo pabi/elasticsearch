@@ -28,6 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.SearchParseElement;
 import org.elasticsearch.search.SearchPhase;
 import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.TransactionContext;
 import org.elasticsearch.search.suggest.Suggest.Suggestion;
 import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry;
 import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry.Option;
@@ -66,7 +67,7 @@ public class SuggestPhase extends AbstractComponent implements SearchPhase {
     }
 
     @Override
-    public void execute(SearchContext context) throws ElasticsearchException {
+    public void execute(SearchContext context, TransactionContext transactionContext) throws ElasticsearchException {
         final SuggestionSearchContext suggest = context.suggest();
         if (suggest == null) {
             return;

@@ -17,25 +17,25 @@
  * under the License.
  */
 
-package org.elasticsearch.search;
+package org.elasticsearch.search.internal;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.search.internal.SearchContext;
-import org.elasticsearch.search.internal.TransactionContext;
+import org.apache.lucene.util.FixedBitSet;
 
-import java.util.Map;
+public class TransactionContext {
 
-/**
- *
- */
-public interface SearchPhase {
+    private final long id;
+    private final FixedBitSet extractedDocs = new FixedBitSet(10000000);
 
-    Map<String, ? extends SearchParseElement> parseElements();
+    public TransactionContext(long id) {
+        this.id = id;
+    }
 
-    /**
-     * Performs pre processing of the search context before the execute.
-     */
-    void preProcess(SearchContext context);
-
-    void execute(SearchContext context, TransactionContext transactionContext) throws ElasticsearchException;
+    public long getId() {
+        return id;
+    }
+    
+    public FixedBitSet getExtractedDocs() {
+        return extractedDocs;
+    }
+    
 }

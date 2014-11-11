@@ -17,25 +17,20 @@
  * under the License.
  */
 
-package org.elasticsearch.search;
+package org.elasticsearch.search.transaction;
 
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.search.internal.SearchContext;
-import org.elasticsearch.search.internal.TransactionContext;
+import org.elasticsearch.transport.TransportResponse;
 
-import java.util.Map;
+public class StartTransactionResult extends TransportResponse {
 
-/**
- *
- */
-public interface SearchPhase {
+    private final long id;
 
-    Map<String, ? extends SearchParseElement> parseElements();
-
-    /**
-     * Performs pre processing of the search context before the execute.
-     */
-    void preProcess(SearchContext context);
-
-    void execute(SearchContext context, TransactionContext transactionContext) throws ElasticsearchException;
+    public StartTransactionResult(long id) {
+        this.id = id;
+    }
+    
+    public long getId() {
+        return id;
+    }
+    
 }

@@ -42,10 +42,7 @@ import org.elasticsearch.search.fetch.source.FetchSourceContext;
 import org.elasticsearch.search.fetch.source.FetchSourceSubPhase;
 import org.elasticsearch.search.fetch.version.VersionFetchSubPhase;
 import org.elasticsearch.search.highlight.HighlightPhase;
-import org.elasticsearch.search.internal.InternalSearchHit;
-import org.elasticsearch.search.internal.InternalSearchHitField;
-import org.elasticsearch.search.internal.InternalSearchHits;
-import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -81,7 +78,7 @@ public class FetchPhase implements SearchPhase {
     public void preProcess(SearchContext context) {
     }
 
-    public void execute(SearchContext context) {
+    public void execute(SearchContext context, TransactionContext transactionContext) {
         FieldsVisitor fieldsVisitor;
         List<String> extractFieldNames = null;
 

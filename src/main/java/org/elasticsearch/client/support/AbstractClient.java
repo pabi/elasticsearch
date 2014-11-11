@@ -71,6 +71,9 @@ import org.elasticsearch.action.suggest.SuggestRequest;
 import org.elasticsearch.action.suggest.SuggestRequestBuilder;
 import org.elasticsearch.action.suggest.SuggestResponse;
 import org.elasticsearch.action.termvector.*;
+import org.elasticsearch.action.transaction.StartTransactionAction;
+import org.elasticsearch.action.transaction.StartTransactionRequest;
+import org.elasticsearch.action.transaction.StartTransactionResponse;
 import org.elasticsearch.action.update.UpdateAction;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -334,6 +337,11 @@ public abstract class AbstractClient implements Client {
         execute(SearchAction.INSTANCE, request, listener);
     }
 
+    @Override
+    public void startTransaction(final StartTransactionRequest request, final ActionListener<StartTransactionResponse> listener) {
+        execute(StartTransactionAction.INSTANCE, request, listener);
+    }
+    
     @Override
     public SearchRequestBuilder prepareSearch(String... indices) {
         return new SearchRequestBuilder(this).setIndices(indices);

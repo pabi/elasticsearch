@@ -27,6 +27,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.SearchParseElement;
 import org.elasticsearch.search.SearchPhase;
 import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.TransactionContext;
 
 import java.io.IOException;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class RescorePhase extends AbstractComponent implements SearchPhase {
     }
 
     @Override
-    public void execute(SearchContext context) throws ElasticsearchException {
+    public void execute(SearchContext context, TransactionContext transactionContext) throws ElasticsearchException {
         try {
             for (RescoreSearchContext ctx : context.rescore()) {
                 ctx.rescorer().rescore(context.queryResult().topDocs(), context, ctx);

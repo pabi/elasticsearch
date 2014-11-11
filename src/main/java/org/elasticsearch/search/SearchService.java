@@ -31,6 +31,7 @@ import org.elasticsearch.ElasticsearchIllegalArgumentException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.transaction.StartTransactionRequest;
 import org.elasticsearch.cache.recycler.CacheRecycler;
 import org.elasticsearch.cache.recycler.PageCacheRecycler;
 import org.elasticsearch.cluster.ClusterService;
@@ -74,6 +75,7 @@ import org.elasticsearch.search.fetch.*;
 import org.elasticsearch.search.internal.*;
 import org.elasticsearch.search.internal.SearchContext.Lifetime;
 import org.elasticsearch.search.query.*;
+import org.elasticsearch.search.transaction.StartTransactionResult;
 import org.elasticsearch.search.warmer.IndexWarmersMetaData;
 import org.elasticsearch.threadpool.ThreadPool;
 
@@ -135,6 +137,8 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     private final ConcurrentMapLong<SearchContext> activeContexts = ConcurrentCollections.newConcurrentMapLongWithAggressiveConcurrency();
 
+    private final ConcurrentMapLong<TransactionContext> activeTransactionContexts = ConcurrentCollections.newConcurrentMapLongWithAggressiveConcurrency();
+    
     private final ImmutableMap<String, SearchParseElement> elementParsers;
 
     @Inject
@@ -194,7 +198,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
         final SearchContext context = createAndPutContext(request);
         try {
             contextProcessing(context);
-            dfsPhase.execute(context);
+            dfsPhase.execute(context, null);
             contextProcessedSuccessfully(context);
             return context.dfsResult();
         } catch (Throwable e) {
@@ -208,6 +212,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QuerySearchResult executeScan(ShardSearchRequest request) throws ElasticsearchException {
         final SearchContext context = createAndPutContext(request);
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         try {
             if (context.aggregations() != null) {
                 throw new ElasticsearchIllegalArgumentException("aggregations are not supported with search_type=scan");
@@ -220,7 +225,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
                 throw new ElasticsearchException("Scroll must be provided when scanning...");
             }
             contextProcessing(context);
-            queryPhase.execute(context);
+            queryPhase.execute(context, transactionContext);
             contextProcessedSuccessfully(context);
             return context.queryResult();
         } catch (Throwable e) {
@@ -234,6 +239,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public ScrollQueryFetchSearchResult executeScan(InternalScrollSearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             processScroll(request, context);
@@ -242,9 +248,9 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
                 context.searchType(SearchType.SCAN);
                 context.from(0);
             }
-            queryPhase.execute(context);
+            queryPhase.execute(context, transactionContext);
             shortcutDocIdsToLoadForScanning(context);
-            fetchPhase.execute(context);
+            fetchPhase.execute(context, transactionContext);
             if (context.scroll() == null || context.fetchResult().hits().hits().length < context.size()) {
                 freeContext(request.id());
             } else {
@@ -259,9 +265,16 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             cleanContext(context);
         }
     }
+    
+    public StartTransactionResult executeStartTransaction(StartTransactionRequest request) throws ElasticsearchException {
+        final long id = createTransactionContext();
+        final StartTransactionResult result = new StartTransactionResult(id);
+        return result;
+    }
 
     public QuerySearchResultProvider executeQueryPhase(ShardSearchRequest request) throws ElasticsearchException {
         final SearchContext context = createAndPutContext(request);
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         try {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
@@ -272,7 +285,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             if (canCache) {
                 result = indicesQueryCache.load(request, context, queryPhase);
             } else {
-                queryPhase.execute(context);
+                queryPhase.execute(context, transactionContext);
                 result = context.queryResult();
             }
 
@@ -300,12 +313,13 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public ScrollQuerySearchResult executeQueryPhase(InternalScrollSearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         try {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
             contextProcessing(context);
             processScroll(request, context);
-            queryPhase.execute(context);
+            queryPhase.execute(context, transactionContext);
             contextProcessedSuccessfully(context);
             context.indexShard().searchService().onQueryPhase(context, System.nanoTime() - time);
             return new ScrollQuerySearchResult(context.queryResult(), context.shardTarget());
@@ -321,6 +335,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QuerySearchResult executeQueryPhase(QuerySearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             context.searcher().dfSource(new CachedDfSource(context.searcher().getIndexReader(), request.dfs(), context.similarityService().similarity()));
@@ -332,7 +347,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
         try {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
-            queryPhase.execute(context);
+            queryPhase.execute(context, transactionContext);
             contextProcessedSuccessfully(context);
             context.indexShard().searchService().onQueryPhase(context, System.nanoTime() - time);
             return context.queryResult();
@@ -348,12 +363,13 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QueryFetchSearchResult executeFetchPhase(ShardSearchRequest request) throws ElasticsearchException {
         final SearchContext context = createAndPutContext(request);
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
             try {
-                queryPhase.execute(context);
+                queryPhase.execute(context, transactionContext);
             } catch (Throwable e) {
                 context.indexShard().searchService().onFailedQueryPhase(context);
                 throw ExceptionsHelper.convertToRuntime(e);
@@ -363,7 +379,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             context.indexShard().searchService().onPreFetchPhase(context);
             try {
                 shortcutDocIdsToLoad(context);
-                fetchPhase.execute(context);
+                fetchPhase.execute(context, transactionContext);
                 if (context.scroll() == null) {
                     freeContext(context.id());
                 } else {
@@ -386,6 +402,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QueryFetchSearchResult executeFetchPhase(QuerySearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             context.searcher().dfSource(new CachedDfSource(context.searcher().getIndexReader(), request.dfs(), context.similarityService().similarity()));
@@ -398,7 +415,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
             try {
-                queryPhase.execute(context);
+                queryPhase.execute(context, transactionContext);
             } catch (Throwable e) {
                 context.indexShard().searchService().onFailedQueryPhase(context);
                 throw ExceptionsHelper.convertToRuntime(e);
@@ -408,7 +425,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             context.indexShard().searchService().onPreFetchPhase(context);
             try {
                 shortcutDocIdsToLoad(context);
-                fetchPhase.execute(context);
+                fetchPhase.execute(context, transactionContext);
                 if (context.scroll() == null) {
                     freeContext(request.id());
                 } else {
@@ -431,13 +448,14 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public ScrollQueryFetchSearchResult executeFetchPhase(InternalScrollSearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             processScroll(request, context);
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
             try {
-                queryPhase.execute(context);
+                queryPhase.execute(context, transactionContext);
             } catch (Throwable e) {
                 context.indexShard().searchService().onFailedQueryPhase(context);
                 throw ExceptionsHelper.convertToRuntime(e);
@@ -447,7 +465,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             context.indexShard().searchService().onPreFetchPhase(context);
             try {
                 shortcutDocIdsToLoad(context);
-                fetchPhase.execute(context);
+                fetchPhase.execute(context, transactionContext);
                 if (context.scroll() == null) {
                     freeContext(request.id());
                 } else {
@@ -470,6 +488,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public FetchSearchResult executeFetchPhase(ShardFetchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
+        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
         contextProcessing(context);
         try {
             if (request.lastEmittedDoc() != null) {
@@ -478,7 +497,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
             context.docIdsToLoad(request.docIds(), 0, request.docIdsSize());
             context.indexShard().searchService().onPreFetchPhase(context);
             long time = System.nanoTime();
-            fetchPhase.execute(context);
+            fetchPhase.execute(context, transactionContext);
             if (context.scroll() == null) {
                 freeContext(request.id());
             } else {
@@ -503,6 +522,17 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
         }
         SearchContext.setCurrent(context);
         return context;
+    }
+    
+    private TransactionContext findTransactionContext(long id) {
+        return activeTransactionContexts.get(id);
+    }
+    
+    private long createTransactionContext() {
+        final long id = idGenerator.incrementAndGet();
+        final TransactionContext context = new TransactionContext(id);
+        activeTransactionContexts.put(id, context);
+        return id;
     }
 
     final SearchContext createAndPutContext(ShardSearchRequest request) throws ElasticsearchException {
@@ -954,7 +984,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
                             if (canCache) {
                                 indicesQueryCache.load(request, context, queryPhase);
                             } else {
-                                queryPhase.execute(context);
+                                queryPhase.execute(context, null);
                             }
                             long took = System.nanoTime() - now;
                             if (indexShard.warmerService().logger().isTraceEnabled()) {

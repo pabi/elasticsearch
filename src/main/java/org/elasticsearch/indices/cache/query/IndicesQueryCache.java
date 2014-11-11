@@ -253,7 +253,7 @@ public class IndicesQueryCache extends AbstractComponent implements RemovalListe
 
         @Override
         public BytesReference call() throws Exception {
-            queryPhase.execute(context);
+            queryPhase.execute(context, null);
             BytesStreamOutput out = new BytesStreamOutput();
             context.queryResult().writeToNoId(out);
             // for now, keep the paged data structure, which might have unused bytes to fill a page, but better to keep

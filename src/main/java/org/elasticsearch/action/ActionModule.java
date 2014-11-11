@@ -161,6 +161,8 @@ import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.TransportAction;
 import org.elasticsearch.action.termvector.*;
+import org.elasticsearch.action.transaction.StartTransactionAction;
+import org.elasticsearch.action.transaction.TransportStartTransactionAction;
 import org.elasticsearch.action.update.TransportUpdateAction;
 import org.elasticsearch.action.update.UpdateAction;
 import org.elasticsearch.common.inject.AbstractModule;
@@ -309,6 +311,7 @@ public class ActionModule extends AbstractModule {
                 TransportSearchScrollQueryThenFetchAction.class,
                 TransportSearchScrollQueryAndFetchAction.class
         );
+        registerAction(StartTransactionAction.INSTANCE, TransportStartTransactionAction.class);
         registerAction(MultiSearchAction.INSTANCE, TransportMultiSearchAction.class);
         registerAction(MoreLikeThisAction.INSTANCE, TransportMoreLikeThisAction.class);
         registerAction(PercolateAction.INSTANCE, TransportPercolateAction.class);

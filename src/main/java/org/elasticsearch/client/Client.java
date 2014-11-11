@@ -19,7 +19,8 @@
 
 package org.elasticsearch.client;
 
-import org.elasticsearch.action.*;
+import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -59,6 +60,8 @@ import org.elasticsearch.action.suggest.SuggestRequest;
 import org.elasticsearch.action.suggest.SuggestRequestBuilder;
 import org.elasticsearch.action.suggest.SuggestResponse;
 import org.elasticsearch.action.termvector.*;
+import org.elasticsearch.action.transaction.StartTransactionRequest;
+import org.elasticsearch.action.transaction.StartTransactionResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
@@ -465,6 +468,13 @@ public interface Client extends ElasticsearchClient<Client>, Releasable {
      * @see Requests#searchRequest(String...)
      */
     void search(SearchRequest request, ActionListener<SearchResponse> listener);
+    
+    /**
+     * Start new search transaction
+     * 
+     * @param listener A listener to be notified of the result
+     */
+    void startTransaction(StartTransactionRequest request, ActionListener<StartTransactionResponse> listener);
 
     /**
      * Search across one or more indices and one or more types with a query.
