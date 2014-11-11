@@ -216,7 +216,7 @@ public class FetchPhase implements SearchPhase {
             }
         }
 
-        context.fetchResult().hits(new InternalSearchHits(hits, context.queryResult().topDocs().totalHits, context.queryResult().topDocs().getMaxScore()));
+        context.fetchResult().hits(new InternalSearchHits(hits, context.queryResult().topDocs().totalHits, context.queryResult().getGrossCount(), context.queryResult().topDocs().getMaxScore()));
     }
 
     private void loadStoredFields(SearchContext context, FieldsVisitor fieldVisitor, int docId) {

@@ -45,6 +45,7 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     private int from;
     private int size;
     private TopDocs topDocs;
+    private long grossCount;
     private InternalFacets facets;
     private InternalAggregations aggregations;
     private Suggest suggest;
@@ -105,6 +106,14 @@ public class QuerySearchResult extends QuerySearchResultProvider {
 
     public void topDocs(TopDocs topDocs) {
         this.topDocs = topDocs;
+    }
+    
+    public void setGrossCount(long grossCount) {
+        this.grossCount = grossCount;
+    }
+    
+    public long getGrossCount() {
+        return grossCount;
     }
 
     public Facets facets() {

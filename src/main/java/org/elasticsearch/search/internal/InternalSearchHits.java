@@ -92,7 +92,7 @@ public class InternalSearchHits implements SearchHits {
 
     public static InternalSearchHits empty() {
         // We shouldn't use static final instance, since that could directly be returned by native transport clients
-        return new InternalSearchHits(EMPTY, 0, 0);
+        return new InternalSearchHits(EMPTY, 0, 0, 0);
     }
 
     public static final InternalSearchHit[] EMPTY = new InternalSearchHit[0];
@@ -100,6 +100,7 @@ public class InternalSearchHits implements SearchHits {
     private InternalSearchHit[] hits;
 
     public long totalHits;
+    public long grossHits;
 
     private float maxScore;
 
@@ -107,9 +108,10 @@ public class InternalSearchHits implements SearchHits {
 
     }
 
-    public InternalSearchHits(InternalSearchHit[] hits, long totalHits, float maxScore) {
+    public InternalSearchHits(InternalSearchHit[] hits, long totalHits, long grossHits, float maxScore) {
         this.hits = hits;
         this.totalHits = totalHits;
+        this.grossHits = grossHits;
         this.maxScore = maxScore;
     }
 
@@ -170,7 +172,8 @@ public class InternalSearchHits implements SearchHits {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(Fields.HITS);
-        builder.field(Fields.TOTAL, totalHits);
+        builder.field("net", totalHits);
+        builder.field("gross", grossHits);
         if (Float.isNaN(maxScore)) {
             builder.nullField(Fields.MAX_SCORE);
         } else {
