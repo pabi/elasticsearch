@@ -28,12 +28,17 @@ import java.io.IOException;
 
 public class UniqueCountCollector extends Collector {
 
-    private final FixedBitSet visited = new FixedBitSet(10000000);
+    private final FixedBitSet visited;
     int docBase;
     
     private int grossCount;
     private int netCount;
     
+    
+    public UniqueCountCollector(FixedBitSet visited) {
+        this.visited = visited;
+    }
+
     @Override
     public void setScorer(Scorer scorer) throws IOException {
     }

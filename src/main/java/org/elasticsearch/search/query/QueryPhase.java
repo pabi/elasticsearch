@@ -114,7 +114,7 @@ public class QueryPhase implements SearchPhase {
             int numDocs = searchContext.from() + searchContext.size();
 
             if (searchContext.searchType() == SearchType.COUNT || numDocs == 0) {
-                UniqueCountCollector collector = new UniqueCountCollector();
+                UniqueCountCollector collector = new UniqueCountCollector(transactionContext.getExtractedDocs());
                 searchContext.searcher().search(query, collector);
                 topDocs = new TopDocs(collector.getNetCount(), Lucene.EMPTY_SCORE_DOCS, 0);
             } else if (searchContext.searchType() == SearchType.SCAN) {

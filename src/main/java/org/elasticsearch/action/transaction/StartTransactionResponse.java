@@ -22,13 +22,12 @@ package org.elasticsearch.action.transaction;
 import org.elasticsearch.action.ActionResponse;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.xcontent.StatusToXContent;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
 
-public class StartTransactionResponse extends ActionResponse implements StatusToXContent {
+public class StartTransactionResponse extends ActionResponse implements ToXContent {
 
     private long id;
     
@@ -52,12 +51,8 @@ public class StartTransactionResponse extends ActionResponse implements StatusTo
     
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
-        return null;
-    }
-
-    @Override
-    public RestStatus status() {
-        return null;
+        builder.field("_transaction_id", id);
+        return builder;
     }
 
 }

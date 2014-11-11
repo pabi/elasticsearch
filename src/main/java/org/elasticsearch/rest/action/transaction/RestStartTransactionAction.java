@@ -19,18 +19,17 @@
 
 package org.elasticsearch.rest.action.transaction;
 
-import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.transaction.StartTransactionRequest;
 import org.elasticsearch.action.transaction.StartTransactionResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestChannel;
-import org.elasticsearch.rest.RestController;
-import org.elasticsearch.rest.RestRequest;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.rest.*;
+import org.elasticsearch.rest.action.support.RestBuilderListener;
 
 import static org.elasticsearch.rest.RestRequest.Method.POST;
+import static org.elasticsearch.rest.RestStatus.OK;
 
 public class RestStartTransactionAction extends BaseRestHandler {
 
@@ -41,21 +40,17 @@ public class RestStartTransactionAction extends BaseRestHandler {
     }
 
     @Override
-    protected void handleRequest(RestRequest request, RestChannel channel, Client client) throws Exception {
+    protected void handleRequest(final RestRequest request, RestChannel channel, Client client) throws Exception {
         System.out.println("TRANSACTION START");
         StartTransactionRequest transactionStartRequest = new StartTransactionRequest();
-        client.startTransaction(transactionStartRequest, new ActionListener<StartTransactionResponse>() {
-            
+        client.startTransaction(transactionStartRequest, new RestBuilderListener<StartTransactionResponse>(channel) {
             @Override
-            public void onResponse(StartTransactionResponse response) {
-                System.out.println("RESPONSE: " + response);
+            public RestResponse buildResponse(StartTransactionResponse response, XContentBuilder builder) throws Exception {
+                builder.startObject();
+                response.toXContent(builder, request);
+                builder.endObject();
+                return new BytesRestResponse(OK, builder);
             }
-            
-            @Override
-            public void onFailure(Throwable e) {
-                System.out.println("FAILURE: " + e);
-            }
-            
         });
     }
 

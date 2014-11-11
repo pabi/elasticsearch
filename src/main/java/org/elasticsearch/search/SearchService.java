@@ -274,7 +274,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QuerySearchResultProvider executeQueryPhase(ShardSearchRequest request) throws ElasticsearchException {
         final SearchContext context = createAndPutContext(request);
-        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
+        final TransactionContext transactionContext = findTransactionContext(1); //TODO: find transactionId
         try {
             context.indexShard().searchService().onPreQueryPhase(context);
             long time = System.nanoTime();
@@ -335,7 +335,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public QuerySearchResult executeQueryPhase(QuerySearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
-        final TransactionContext transactionContext = findTransactionContext(0); //TODO: find transactionId
+        final TransactionContext transactionContext = findTransactionContext(1); //TODO: find transactionId
         contextProcessing(context);
         try {
             context.searcher().dfSource(new CachedDfSource(context.searcher().getIndexReader(), request.dfs(), context.similarityService().similarity()));
