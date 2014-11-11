@@ -49,6 +49,8 @@ public interface ShardSearchRequest {
     int numberOfShards();
 
     SearchType searchType();
+    
+    Long transactionId();
 
     String[] filteringAliases();
 

@@ -42,6 +42,8 @@ public class QuerySearchRequest extends TransportRequest implements IndicesReque
     private AggregatedDfs dfs;
 
     private OriginalIndices originalIndices;
+    
+    private Long transactionId;
 
     public QuerySearchRequest() {
     }
@@ -51,6 +53,7 @@ public class QuerySearchRequest extends TransportRequest implements IndicesReque
         this.id = id;
         this.dfs = dfs;
         this.originalIndices = new OriginalIndices(request);
+        this.transactionId = request.transactionId();
     }
 
     public long id() {
@@ -69,6 +72,10 @@ public class QuerySearchRequest extends TransportRequest implements IndicesReque
     @Override
     public IndicesOptions indicesOptions() {
         return originalIndices.indicesOptions();
+    }
+    
+    public Long transactionId() {
+        return transactionId;
     }
 
     @Override

@@ -29,7 +29,10 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
-import org.elasticsearch.rest.*;
+import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.RestChannel;
+import org.elasticsearch.rest.RestController;
+import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.exists.RestExistsAction;
 import org.elasticsearch.rest.action.support.RestStatusToXContentListener;
 import org.elasticsearch.search.Scroll;
@@ -106,6 +109,10 @@ public class RestSearchAction extends BaseRestHandler {
 
         searchRequest.extraSource(parseSearchSource(request));
         searchRequest.searchType(request.param("search_type"));
+        final String transId = request.param("transaction_id", null);
+        if (transId != null) {
+            searchRequest.transactionId(Long.parseLong(transId));
+        }
         searchRequest.queryCache(request.paramAsBoolean("query_cache", null));
 
         String scroll = request.param("scroll");

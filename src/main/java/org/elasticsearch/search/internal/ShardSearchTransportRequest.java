@@ -113,6 +113,11 @@ public class ShardSearchTransportRequest extends TransportRequest implements Sha
     public SearchType searchType() {
         return shardSearchLocalRequest.searchType();
     }
+    
+    @Override
+    public Long transactionId() {
+        return shardSearchLocalRequest.transactionId();
+    }
 
     @Override
     public String[] filteringAliases() {

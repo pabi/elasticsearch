@@ -67,6 +67,8 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     private int numberOfShards;
 
     private SearchType searchType;
+    
+    private Long transactionId;
 
     private Scroll scroll;
 
@@ -92,7 +94,7 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     ShardSearchLocalRequest(SearchRequest searchRequest, ShardRouting shardRouting, int numberOfShards,
                             boolean useSlowScroll, String[] filteringAliases, long nowInMillis) {
         this(shardRouting.shardId(), numberOfShards, searchRequest.searchType(),
-                searchRequest.source(), searchRequest.types(), searchRequest.queryCache());
+                searchRequest.source(), searchRequest.types(), searchRequest.queryCache(), searchRequest.transactionId());
 
         this.extraSource = searchRequest.extraSource();
         this.templateSource = searchRequest.templateSource();
@@ -116,11 +118,12 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     }
 
     public ShardSearchLocalRequest(ShardId shardId, int numberOfShards, SearchType searchType,
-                                   BytesReference source, String[] types, Boolean queryCache) {
+                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId) {
         this.index = shardId.getIndex();
         this.shardId = shardId.id();
         this.numberOfShards = numberOfShards;
         this.searchType = searchType;
+        this.transactionId = transactionId;
         this.source = source;
         this.types = types;
         this.queryCache = queryCache;
@@ -164,6 +167,11 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     @Override
     public SearchType searchType() {
         return searchType;
+    }
+    
+    @Override
+    public Long transactionId() {
+        return transactionId;
     }
 
     @Override

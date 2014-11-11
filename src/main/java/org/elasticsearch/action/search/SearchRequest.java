@@ -90,6 +90,8 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     public static final IndicesOptions DEFAULT_INDICES_OPTIONS = IndicesOptions.strictExpandOpenAndForbidClosed();
 
     private IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
+    
+    private Long transactionId;
 
     public SearchRequest() {
     }
@@ -117,6 +119,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         this.scroll = searchRequest.scroll;
         this.types = searchRequest.types;
         this.indicesOptions = searchRequest.indicesOptions;
+        this.transactionId = searchRequest.transactionId;
     }
 
     /**
@@ -541,6 +544,14 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     public Boolean queryCache() {
         return this.queryCache;
     }
+    
+    public Long transactionId() {
+        return transactionId;
+    }
+    
+    public void transactionId(Long transactionId) {
+        this.transactionId = transactionId;
+    }
 
     @Override
     public void readFrom(StreamInput in) throws IOException {
@@ -586,6 +597,11 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         if (in.getVersion().onOrAfter(Version.V_1_4_0_Beta1)) {
             queryCache = in.readOptionalBoolean();
         }
+        
+        final String transIdAsString = in.readOptionalString();
+        if (transIdAsString != null) {
+            transactionId = Long.parseLong(transIdAsString);
+        }
     }
 
     @Override
@@ -630,6 +646,10 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
 
         if (out.getVersion().onOrAfter(Version.V_1_4_0_Beta1)) {
             out.writeOptionalBoolean(queryCache);
+        }
+        
+        if (transactionId != null) {
+            out.writeLong(transactionId);
         }
     }
 }
