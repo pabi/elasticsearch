@@ -321,6 +321,7 @@ public class SearchPhaseController extends AbstractComponent {
 
         // count the total (we use the query result provider here, since we might not get any hits (we scrolled past them))
         long totalHits = 0;
+        long grossHits = 0;
         float maxScore = Float.NEGATIVE_INFINITY;
         boolean timedOut = false;
         Boolean terminatedEarly = null;
@@ -337,6 +338,7 @@ public class SearchPhaseController extends AbstractComponent {
                 }
             }
             totalHits += result.topDocs().totalHits;
+            grossHits += result.getGrossCount();
             if (!Float.isNaN(result.topDocs().getMaxScore())) {
                 maxScore = Math.max(maxScore, result.topDocs().getMaxScore());
             }
@@ -408,7 +410,7 @@ public class SearchPhaseController extends AbstractComponent {
             }
         }
 
-        InternalSearchHits searchHits = new InternalSearchHits(hits.toArray(new InternalSearchHit[hits.size()]), totalHits, maxScore);
+        InternalSearchHits searchHits = new InternalSearchHits(hits.toArray(new InternalSearchHit[hits.size()]), totalHits, grossHits, maxScore);
 
         return new InternalSearchResponse(searchHits, facets, aggregations, suggest, timedOut, terminatedEarly);
     }

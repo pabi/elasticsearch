@@ -122,7 +122,7 @@ public class InternalTopHits extends InternalMetricsAggregation implements TopHi
                 } while (shardDocs[scoreDoc.shardIndex].scoreDocs[position] != scoreDoc);
                 hits[i] = (InternalSearchHit) shardHits[scoreDoc.shardIndex].getAt(position);
             }
-            return new InternalTopHits(name, new InternalSearchHits(hits, reducedTopDocs.totalHits, reducedTopDocs.getMaxScore()));
+            return new InternalTopHits(name, new InternalSearchHits(hits, reducedTopDocs.totalHits, 0, reducedTopDocs.getMaxScore()));
         } catch (IOException e) {
             throw ExceptionsHelper.convertToElastic(e);
         }

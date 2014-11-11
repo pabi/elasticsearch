@@ -125,11 +125,12 @@ public class QueryPhase implements SearchPhase {
                 searchContext.searcher().search(query, collector);
                 Integer limit = searchContext.limit();
                 int netCount = collector.getNetCount();
-                if (limit != null && limit > netCount) {
+                if (limit != null && limit < netCount) {
                     limitExtractedDocs(extractedDocs, limit);
                     netCount = limit;
                 }
                 topDocs = new TopDocs(netCount, Lucene.EMPTY_SCORE_DOCS, 0);
+                searchContext.queryResult().setGrossCount(collector.getGrossCount());
             } else if (searchContext.searchType() == SearchType.SCAN) {
                 topDocs = searchContext.scanContext().execute(searchContext);
             } else {
