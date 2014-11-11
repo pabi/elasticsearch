@@ -20,9 +20,12 @@
 package org.elasticsearch.search.query;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.lucene.Lucene;
@@ -40,6 +43,9 @@ import org.elasticsearch.search.sort.SortParseElement;
 import org.elasticsearch.search.sort.TrackScoresParseElement;
 import org.elasticsearch.search.suggest.SuggestPhase;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -114,9 +120,16 @@ public class QueryPhase implements SearchPhase {
             int numDocs = searchContext.from() + searchContext.size();
 
             if (searchContext.searchType() == SearchType.COUNT || numDocs == 0) {
-                UniqueCountCollector collector = new UniqueCountCollector(transactionContext.getExtractedDocs());
+                FixedBitSet extractedDocs = transactionContext.getExtractedDocs();
+                UniqueCountCollector collector = new UniqueCountCollector(extractedDocs);
                 searchContext.searcher().search(query, collector);
-                topDocs = new TopDocs(collector.getNetCount(), Lucene.EMPTY_SCORE_DOCS, 0);
+                Integer limit = searchContext.limit();
+                int netCount = collector.getNetCount();
+                if (limit != null && limit > netCount) {
+                    limitExtractedDocs(extractedDocs, limit);
+                    netCount = limit;
+                }
+                topDocs = new TopDocs(netCount, Lucene.EMPTY_SCORE_DOCS, 0);
             } else if (searchContext.searchType() == SearchType.SCAN) {
                 topDocs = searchContext.scanContext().execute(searchContext);
             } else {
@@ -171,5 +184,23 @@ public class QueryPhase implements SearchPhase {
         suggestPhase.execute(searchContext, null);
         facetPhase.execute(searchContext, null);
         aggregationPhase.execute(searchContext, null);
+    }
+
+    private void limitExtractedDocs(FixedBitSet extractedDocs, int limit) {
+        try {
+            int cardinality = extractedDocs.cardinality();
+            List<Integer> ids = Lists.newArrayListWithCapacity(cardinality);
+            DocIdSetIterator it = extractedDocs.iterator();
+            while (DocIdSetIterator.NO_MORE_DOCS != it.nextDoc()) {
+                ids.add(it.docID());
+            }
+            Collections.shuffle(ids);
+            extractedDocs.clear(0, cardinality);
+            for (int i = 0; i < limit; ++i) {
+                extractedDocs.set(ids.get(i));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed while limiting docs", e);
+        }
     }
 }

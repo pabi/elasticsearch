@@ -42,8 +42,8 @@ import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.index.analysis.AnalysisService;
 import org.elasticsearch.index.cache.docset.DocSetCache;
 import org.elasticsearch.index.cache.filter.FilterCache;
-import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.cache.fixedbitset.FixedBitSetFilterCache;
+import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.fielddata.IndexFieldDataService;
 import org.elasticsearch.index.mapper.FieldMapper;
 import org.elasticsearch.index.mapper.FieldMappers;
@@ -90,6 +90,8 @@ public class DefaultSearchContext extends SearchContext {
     private final Counter timeEstimateCounter;
 
     private SearchType searchType;
+    
+    private final Integer limit;
 
     private final Engine.Searcher engineSearcher;
 
@@ -192,6 +194,7 @@ public class DefaultSearchContext extends SearchContext {
         this.id = id;
         this.request = request;
         this.searchType = request.searchType();
+        this.limit = request.limit();
         this.shardTarget = shardTarget;
         this.engineSearcher = engineSearcher;
         this.scriptService = scriptService;
@@ -284,6 +287,11 @@ public class DefaultSearchContext extends SearchContext {
     public SearchContext searchType(SearchType searchType) {
         this.searchType = searchType;
         return this;
+    }
+    
+    @Override
+    public Integer limit() {
+        return limit;
     }
 
     public SearchShardTarget shardTarget() {

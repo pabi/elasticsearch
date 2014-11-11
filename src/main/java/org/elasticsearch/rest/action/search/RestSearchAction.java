@@ -109,9 +109,13 @@ public class RestSearchAction extends BaseRestHandler {
 
         searchRequest.extraSource(parseSearchSource(request));
         searchRequest.searchType(request.param("search_type"));
-        final String transId = request.param("transaction_id", null);
+        final String transId = request.param("transaction_id");
         if (transId != null) {
             searchRequest.transactionId(Long.parseLong(transId));
+        }
+        final String limit = request.param("limit");
+        if (limit != null) {
+            searchRequest.limit(Integer.parseInt(limit));
         }
         searchRequest.queryCache(request.paramAsBoolean("query_cache", null));
 

@@ -92,6 +92,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     private IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
     
     private Long transactionId;
+    private Integer limit;
 
     public SearchRequest() {
     }
@@ -120,6 +121,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         this.types = searchRequest.types;
         this.indicesOptions = searchRequest.indicesOptions;
         this.transactionId = searchRequest.transactionId;
+        this.limit = searchRequest.limit;
     }
 
     /**
@@ -551,6 +553,14 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     
     public void transactionId(Long transactionId) {
         this.transactionId = transactionId;
+    }
+    
+    public Integer limit() {
+        return limit;
+    }
+    
+    public void limit(Integer limit) {
+        this.limit = limit;
     }
 
     @Override

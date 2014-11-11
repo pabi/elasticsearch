@@ -136,6 +136,11 @@ public class TestSearchContext extends SearchContext {
     public SearchType searchType() {
         return null;
     }
+    
+    @Override
+    public Integer limit() {
+        return null;
+    }
 
     @Override
     public SearchContext searchType(SearchType searchType) {

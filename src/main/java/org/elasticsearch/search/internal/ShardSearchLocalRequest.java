@@ -69,6 +69,8 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     private SearchType searchType;
     
     private Long transactionId;
+    
+    private Integer limit;
 
     private Scroll scroll;
 
@@ -94,7 +96,7 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     ShardSearchLocalRequest(SearchRequest searchRequest, ShardRouting shardRouting, int numberOfShards,
                             boolean useSlowScroll, String[] filteringAliases, long nowInMillis) {
         this(shardRouting.shardId(), numberOfShards, searchRequest.searchType(),
-                searchRequest.source(), searchRequest.types(), searchRequest.queryCache(), searchRequest.transactionId());
+                searchRequest.source(), searchRequest.types(), searchRequest.queryCache(), searchRequest.transactionId(), searchRequest.limit());
 
         this.extraSource = searchRequest.extraSource();
         this.templateSource = searchRequest.templateSource();
@@ -118,12 +120,13 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     }
 
     public ShardSearchLocalRequest(ShardId shardId, int numberOfShards, SearchType searchType,
-                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId) {
+                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId, Integer limit) {
         this.index = shardId.getIndex();
         this.shardId = shardId.id();
         this.numberOfShards = numberOfShards;
         this.searchType = searchType;
         this.transactionId = transactionId;
+        this.limit = limit;
         this.source = source;
         this.types = types;
         this.queryCache = queryCache;
@@ -172,6 +175,11 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     @Override
     public Long transactionId() {
         return transactionId;
+    }
+    
+    @Override
+    public Integer limit() {
+        return limit;
     }
 
     @Override

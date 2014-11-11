@@ -135,6 +135,11 @@ public class TopHitsContext extends SearchContext {
     public SearchType searchType() {
         return context.searchType();
     }
+    
+    @Override
+    public Integer limit() {
+        return context.limit();
+    }
 
     @Override
     public SearchContext searchType(SearchType searchType) {

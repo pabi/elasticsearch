@@ -115,6 +115,11 @@ public class ShardSearchTransportRequest extends TransportRequest implements Sha
     }
     
     @Override
+    public Integer limit() {
+        return shardSearchLocalRequest.limit();
+    }
+    
+    @Override
     public Long transactionId() {
         return shardSearchLocalRequest.transactionId();
     }

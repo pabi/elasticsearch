@@ -51,6 +51,8 @@ public interface ShardSearchRequest {
     SearchType searchType();
     
     Long transactionId();
+    
+    Integer limit();
 
     String[] filteringAliases();
 
