@@ -27,6 +27,7 @@ import java.util.Map;
 public class TransactionContext {
 
     private final long id;
+    private final Map<Integer, FixedBitSet> visitedDocs = new HashMap<Integer, FixedBitSet>();
     private final Map<Integer, FixedBitSet> extractedDocs = new HashMap<Integer, FixedBitSet>();
 
     public TransactionContext(long id) {
@@ -37,12 +38,21 @@ public class TransactionContext {
         return id;
     }
     
+    public FixedBitSet getVisitedDocs(int shardId) {
+        return getBitSet(shardId, visitedDocs);
+    }
+    
     public FixedBitSet getExtractedDocs(int shardId) {
-        if (!extractedDocs.containsKey(shardId)) {
-            final FixedBitSet fixedBitSet = new FixedBitSet(3000000);
-            extractedDocs.put(shardId, fixedBitSet);
+        return getBitSet(shardId, extractedDocs);
+    }
+    
+    private FixedBitSet getBitSet(int shardId, Map<Integer, FixedBitSet> bitsets) {
+        if (bitsets.containsKey(shardId)) {
+            return bitsets.get(shardId);
         }
-        return extractedDocs.get(shardId);
+        final FixedBitSet fixedBitSet = new FixedBitSet(3000000);
+        bitsets.put(shardId, fixedBitSet);
+        return fixedBitSet;
     }
     
 }

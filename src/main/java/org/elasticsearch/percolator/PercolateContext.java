@@ -725,4 +725,9 @@ public class PercolateContext extends SearchContext {
     public Counter timeEstimateCounter() {
         throw new UnsupportedOperationException();
     }
+    
+    @Override
+    public Long transactionId() {
+        throw new UnsupportedOperationException();
+    }
 }

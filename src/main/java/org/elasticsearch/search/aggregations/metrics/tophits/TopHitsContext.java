@@ -643,4 +643,9 @@ public class TopHitsContext extends SearchContext {
     public Counter timeEstimateCounter() {
         throw new UnsupportedOperationException("Not supported");
     }
+    
+    @Override
+    public Long transactionId() {
+        throw new UnsupportedOperationException();
+    }
 }

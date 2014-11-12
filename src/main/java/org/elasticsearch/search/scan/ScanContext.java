@@ -23,10 +23,12 @@ import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.common.lucene.docset.AllDocIdSet;
 import org.elasticsearch.common.lucene.search.XFilteredQuery;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.search.internal.SearchContext;
+import org.elasticsearch.search.internal.TransactionContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,8 +47,9 @@ public class ScanContext {
         readerStates.clear();
     }
 
-    public TopDocs execute(SearchContext context) throws IOException {
-        ScanCollector collector = new ScanCollector(readerStates, context.from(), context.size(), context.trackScores());
+    public TopDocs execute(SearchContext context, TransactionContext transactionContext) throws IOException {
+        final FixedBitSet extractedDocs = transactionContext.getExtractedDocs(context.shardTarget().getShardId());
+        ScanCollector collector = new UniqueScanCollector(readerStates, context.from(), context.size(), context.trackScores(), extractedDocs);
         Query query = new XFilteredQuery(context.query(), new ScanFilter(readerStates, collector));
         try {
             context.searcher().search(query, collector);
@@ -55,7 +58,7 @@ public class ScanContext {
         }
         return collector.topDocs();
     }
-
+    
     static class ScanCollector extends Collector {
 
         private final ConcurrentMap<IndexReader, ReaderState> readerStates;
@@ -101,13 +104,20 @@ public class ScanContext {
         @Override
         public void collect(int doc) throws IOException {
             if (counter >= from) {
-                docs.add(new ScoreDoc(docBase + doc, trackScores ? scorer.score() : 0f));
+                int docId = docBase + doc;
+                if (shouldAddDoc(docId)) {
+                    docs.add(new ScoreDoc(docId, trackScores ? scorer.score() : 0f));
+                }
             }
             readerState.count++;
             counter++;
             if (counter >= to) {
                 throw StopCollectingException;
             }
+        }
+
+        protected boolean shouldAddDoc(int docId) {
+            return true;
         }
 
         @Override
@@ -137,6 +147,24 @@ public class ScanContext {
             public Throwable fillInStackTrace() {
                 return null;
             }
+        }
+    }
+    
+    static class UniqueScanCollector extends ScanCollector {
+        private final FixedBitSet extracted;
+        
+        public UniqueScanCollector(ConcurrentMap<IndexReader, ReaderState> readerStates, int from, int size, boolean trackScores, FixedBitSet extracted) {
+            super(readerStates, from, size, trackScores);
+            this.extracted = extracted;
+        }
+        
+        @Override
+        protected boolean shouldAddDoc(int docId) {
+            if (extracted.get(docId)) {
+                return false;
+            }
+            extracted.set(docId);
+            return true;
         }
     }
 

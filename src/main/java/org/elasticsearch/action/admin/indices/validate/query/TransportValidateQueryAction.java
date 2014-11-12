@@ -181,7 +181,7 @@ public class TransportValidateQueryAction extends TransportBroadcastOperationAct
         DefaultSearchContext searchContext = new DefaultSearchContext(0,
                 new ShardSearchLocalRequest(request.types(), request.nowInMillis(), request.filteringAliases()),
                 null, indexShard.acquireSearcher("validate_query"), indexService, indexShard,
-                scriptService, cacheRecycler, pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter()
+                scriptService, cacheRecycler, pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter(), null
         );
         SearchContext.setCurrent(searchContext);
         try {
