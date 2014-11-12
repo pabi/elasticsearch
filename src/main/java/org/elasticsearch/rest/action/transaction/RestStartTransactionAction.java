@@ -41,7 +41,6 @@ public class RestStartTransactionAction extends BaseRestHandler {
 
     @Override
     protected void handleRequest(final RestRequest request, RestChannel channel, Client client) throws Exception {
-        System.out.println("TRANSACTION START");
         StartTransactionRequest transactionStartRequest = new StartTransactionRequest();
         client.startTransaction(transactionStartRequest, new RestBuilderListener<StartTransactionResponse>(channel) {
             @Override

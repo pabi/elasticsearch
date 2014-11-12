@@ -52,8 +52,6 @@ public class TransportStartTransactionAction extends HandledTransportAction<Star
 
     @Override
     protected void doExecute(StartTransactionRequest request, ActionListener<StartTransactionResponse> listener) {
-        
-        System.out.println("EXECUTE");
         new AsyncAction(request, listener).start();
     }
     
@@ -72,7 +70,6 @@ public class TransportStartTransactionAction extends HandledTransportAction<Star
             searchService.sendExecuteStartTransaction(node, request, new SearchServiceListener<StartTransactionResult>() {
                 @Override
                 public void onResult(StartTransactionResult result) {
-                    System.out.println("onResult");
                     final StartTransactionResponse response = new StartTransactionResponse();
                     response.setId(result.getId());
                     listener.onResponse(response);
@@ -80,7 +77,6 @@ public class TransportStartTransactionAction extends HandledTransportAction<Star
 
                 @Override
                 public void onFailure(Throwable t) {
-                    System.out.println("onFailure");
                     listener.onFailure(t);
                 }
             });
