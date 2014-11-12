@@ -120,19 +120,19 @@ public class QueryPhase implements SearchPhase {
             int numDocs = searchContext.from() + searchContext.size();
 
             if (searchContext.searchType() == SearchType.COUNT || numDocs == 0) {
-                FixedBitSet extractedDocs = transactionContext.getExtractedDocs(searchContext.shardTarget().getShardId());
-                UniqueCountCollector collector = new UniqueCountCollector(extractedDocs);
+                FixedBitSet visitedDocs = transactionContext.getVisitedDocs(searchContext.shardTarget().getShardId());
+                UniqueCountCollector collector = new UniqueCountCollector(visitedDocs);
                 searchContext.searcher().search(query, collector);
                 Integer limit = searchContext.limit();
                 int netCount = collector.getNetCount();
                 if (limit != null && limit < netCount) {
-                    limitExtractedDocs(extractedDocs, limit);
+                    limitExtractedDocs(visitedDocs, limit);
                     netCount = limit;
                 }
                 topDocs = new TopDocs(netCount, Lucene.EMPTY_SCORE_DOCS, 0);
                 searchContext.queryResult().setGrossCount(collector.getGrossCount());
             } else if (searchContext.searchType() == SearchType.SCAN) {
-                topDocs = searchContext.scanContext().execute(searchContext);
+                topDocs = searchContext.scanContext().execute(searchContext, transactionContext);
             } else {
                 // Perhaps have a dedicated scroll phase?
                 if (!searchContext.useSlowScroll() && searchContext.request().scroll() != null) {

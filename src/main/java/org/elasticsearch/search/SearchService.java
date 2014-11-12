@@ -239,7 +239,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public ScrollQueryFetchSearchResult executeScan(InternalScrollSearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
-        final TransactionContext transactionContext = null; //TODO: Maybe save the transactionId in searchContext?
+        final TransactionContext transactionContext = findTransactionContext(context.transactionId());
         contextProcessing(context);
         try {
             processScroll(request, context);
@@ -448,7 +448,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public ScrollQueryFetchSearchResult executeFetchPhase(InternalScrollSearchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
-        final TransactionContext transactionContext = null;
+        final TransactionContext transactionContext = findTransactionContext(context.transactionId());
         contextProcessing(context);
         try {
             processScroll(request, context);
@@ -488,7 +488,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
 
     public FetchSearchResult executeFetchPhase(ShardFetchRequest request) throws ElasticsearchException {
         final SearchContext context = findContext(request.id());
-        final TransactionContext transactionContext = null;
+        final TransactionContext transactionContext = findTransactionContext(context.transactionId());
         contextProcessing(context);
         try {
             if (request.lastEmittedDoc() != null) {
@@ -557,7 +557,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
         SearchShardTarget shardTarget = new SearchShardTarget(clusterService.localNode().id(), request.index(), request.shardId());
 
         Engine.Searcher engineSearcher = searcher == null ? indexShard.acquireSearcher("search") : searcher;
-        final SearchContext context = new DefaultSearchContext(idGenerator.incrementAndGet(), request, shardTarget, engineSearcher, indexService, indexShard, scriptService, cacheRecycler, pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter());
+        final SearchContext context = new DefaultSearchContext(idGenerator.incrementAndGet(), request, shardTarget, engineSearcher, indexService, indexShard, scriptService, cacheRecycler, pageCacheRecycler, bigArrays, threadPool.estimatedTimeInMillisCounter(), request.transactionId());
         SearchContext.setCurrent(context);
         try {
             context.scroll(request.scroll());

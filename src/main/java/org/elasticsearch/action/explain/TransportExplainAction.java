@@ -120,7 +120,7 @@ public class TransportExplainAction extends TransportShardSingleOperationAction<
                 0, new ShardSearchLocalRequest(new String[]{request.type()}, request.nowInMillis, request.filteringAlias()),
                 null, result.searcher(), indexService, indexShard,
                 scriptService, cacheRecycler, pageCacheRecycler,
-                bigArrays, threadPool.estimatedTimeInMillisCounter()
+                bigArrays, threadPool.estimatedTimeInMillisCounter(), null
         );
         SearchContext.setCurrent(context);
 

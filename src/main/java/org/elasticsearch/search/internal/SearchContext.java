@@ -369,6 +369,8 @@ public abstract class SearchContext implements Releasable {
     public abstract SearchContext useSlowScroll(boolean useSlowScroll);
 
     public abstract Counter timeEstimateCounter();
+    
+    public abstract Long transactionId();
 
     /**
      * The life time of an object that is used during search execution.

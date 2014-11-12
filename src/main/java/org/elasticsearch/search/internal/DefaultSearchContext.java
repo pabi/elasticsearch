@@ -186,11 +186,13 @@ public class DefaultSearchContext extends SearchContext {
     private volatile long lastAccessTime = -1;
 
     private volatile boolean useSlowScroll;
+    
+    private final Long transactionId;
 
     public DefaultSearchContext(long id, ShardSearchRequest request, SearchShardTarget shardTarget,
                          Engine.Searcher engineSearcher, IndexService indexService, IndexShard indexShard,
                          ScriptService scriptService, CacheRecycler cacheRecycler, PageCacheRecycler pageCacheRecycler,
-                         BigArrays bigArrays, Counter timeEstimateCounter) {
+                         BigArrays bigArrays, Counter timeEstimateCounter, Long transactionId) {
         this.id = id;
         this.request = request;
         this.searchType = request.searchType();
@@ -213,6 +215,7 @@ public class DefaultSearchContext extends SearchContext {
         // initialize the filtering alias based on the provided filters
         aliasFilter = indexService.aliasesService().aliasFilter(request.filteringAliases());
         this.timeEstimateCounter = timeEstimateCounter;
+        this.transactionId = transactionId;
     }
 
     @Override
@@ -745,5 +748,10 @@ public class DefaultSearchContext extends SearchContext {
     @Override
     public Counter timeEstimateCounter() {
         return timeEstimateCounter;
+    }
+    
+    @Override
+    public Long transactionId() {
+        return transactionId;
     }
 }

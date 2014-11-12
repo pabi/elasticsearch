@@ -634,4 +634,9 @@ public class TestSearchContext extends SearchContext {
     public Counter timeEstimateCounter() {
         throw new UnsupportedOperationException();
     }
+    
+    @Override
+    public Long transactionId() {
+        throw new UnsupportedOperationException();
+    }
 }
