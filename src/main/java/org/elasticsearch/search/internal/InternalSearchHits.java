@@ -100,7 +100,7 @@ public class InternalSearchHits implements SearchHits {
     private InternalSearchHit[] hits;
 
     public long totalHits;
-    public long grossHits;
+    public long netHits;
 
     private float maxScore;
 
@@ -108,10 +108,10 @@ public class InternalSearchHits implements SearchHits {
 
     }
 
-    public InternalSearchHits(InternalSearchHit[] hits, long totalHits, long grossHits, float maxScore) {
+    public InternalSearchHits(InternalSearchHit[] hits, long totalHits, long netHits, float maxScore) {
         this.hits = hits;
         this.totalHits = totalHits;
-        this.grossHits = grossHits;
+        this.netHits = netHits;
         this.maxScore = maxScore;
     }
 
@@ -172,8 +172,8 @@ public class InternalSearchHits implements SearchHits {
     @Override
     public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject(Fields.HITS);
-        builder.field("net", totalHits);
-        builder.field("gross", grossHits);
+        builder.field("gross", totalHits);
+        builder.field("net", netHits);
         if (Float.isNaN(maxScore)) {
             builder.nullField(Fields.MAX_SCORE);
         } else {

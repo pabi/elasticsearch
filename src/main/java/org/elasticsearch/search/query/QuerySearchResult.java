@@ -20,6 +20,7 @@
 package org.elasticsearch.search.query;
 
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
@@ -45,12 +46,16 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     private int from;
     private int size;
     private TopDocs topDocs;
-    private long grossCount;
+    private long netCount;
     private InternalFacets facets;
     private InternalAggregations aggregations;
     private Suggest suggest;
     private boolean searchTimedOut;
     private Boolean terminatedEarly = null;
+    
+    Integer limit;
+    private FixedBitSet visited;
+    
 
     public QuerySearchResult() {
 
@@ -108,12 +113,12 @@ public class QuerySearchResult extends QuerySearchResultProvider {
         this.topDocs = topDocs;
     }
     
-    public void setGrossCount(long grossCount) {
-        this.grossCount = grossCount;
+    public void setNetCount(long netCount) {
+        this.netCount = netCount;
     }
     
-    public long getGrossCount() {
-        return grossCount;
+    public long getNetCount() {
+        return netCount;
     }
 
     public Facets facets() {
@@ -156,6 +161,22 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     public QuerySearchResult size(int size) {
         this.size = size;
         return this;
+    }
+    
+    public Integer getLimit() {
+        return limit;
+    }
+    
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+    
+    public FixedBitSet getVisited() {
+        return visited;
+    }
+    
+    public void setVisited(FixedBitSet visited) {
+        this.visited = visited;
     }
 
     public static QuerySearchResult readQuerySearchResult(StreamInput in) throws IOException {

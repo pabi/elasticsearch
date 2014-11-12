@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
 import com.google.common.collect.Lists;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.cache.recycler.CacheRecycler;
 import org.elasticsearch.common.collect.HppcMaps;
@@ -318,10 +319,23 @@ public class SearchPhaseController extends AbstractComponent {
                 facets = new InternalFacets(aggregatedFacets);
             }
         }
+        
+        int totalNetHits = 0;
+        final ArrayList<FixedBitSet> bitSets = Lists.newArrayList();
+        for (AtomicArray.Entry<? extends QuerySearchResultProvider> entry : queryResults) {
+            QuerySearchResult result = entry.value.queryResult();
+            totalNetHits += result.getNetCount();
+            bitSets.add(result.getVisited());
+        }
+        
+        final Integer limit = firstResult.queryResult().getLimit();
+        if (limit != null && limit < totalNetHits) {
+            limitExtractedDocs(bitSets, totalNetHits, limit);
+            totalNetHits = limit;
+        }
 
         // count the total (we use the query result provider here, since we might not get any hits (we scrolled past them))
         long totalHits = 0;
-        long grossHits = 0;
         float maxScore = Float.NEGATIVE_INFINITY;
         boolean timedOut = false;
         Boolean terminatedEarly = null;
@@ -337,8 +351,9 @@ public class SearchPhaseController extends AbstractComponent {
                     terminatedEarly = true;
                 }
             }
+            
+            
             totalHits += result.topDocs().totalHits;
-            grossHits += result.getGrossCount();
             if (!Float.isNaN(result.topDocs().getMaxScore())) {
                 maxScore = Math.max(maxScore, result.topDocs().getMaxScore());
             }
@@ -410,9 +425,39 @@ public class SearchPhaseController extends AbstractComponent {
             }
         }
 
-        InternalSearchHits searchHits = new InternalSearchHits(hits.toArray(new InternalSearchHit[hits.size()]), totalHits, grossHits, maxScore);
+        InternalSearchHits searchHits = new InternalSearchHits(hits.toArray(new InternalSearchHit[hits.size()]), totalHits, totalNetHits, maxScore);
 
         return new InternalSearchResponse(searchHits, facets, aggregations, suggest, timedOut, terminatedEarly);
+    }
+    
+    private static void limitExtractedDocs(Collection<FixedBitSet> extractedDocs, int totalNetCount, int limit) {
+        try {
+            int removeCount = totalNetCount - limit;
+
+            List<Integer> removes = Lists.newArrayListWithCapacity(totalNetCount);
+            for (int i = 0; i < totalNetCount; i++) {
+                removes.add(i);
+            }
+            Collections.shuffle(removes);
+            List<Integer> removesList = removes.subList(0, removeCount);
+            Collections.sort(removesList);
+            final Iterator<Integer> removesIterator = removesList.iterator();
+
+            int nextRemove = removesIterator.next();
+            int position = 0;
+            for (FixedBitSet fixedBitSet : extractedDocs) {
+                DocIdSetIterator bitSetIterator = fixedBitSet.iterator();
+                
+                while (bitSetIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS && removesIterator.hasNext()) {
+                    if (position++ == nextRemove) {
+                        fixedBitSet.clear(bitSetIterator.docID());
+                        nextRemove = removesIterator.next();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
     }
 
 }

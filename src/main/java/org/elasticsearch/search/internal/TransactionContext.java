@@ -38,12 +38,11 @@ public class TransactionContext {
     }
     
     public FixedBitSet getExtractedDocs(int shardId) {
-        if (extractedDocs.containsKey(shardId)) {
-            return extractedDocs.get(shardId);
+        if (!extractedDocs.containsKey(shardId)) {
+            final FixedBitSet fixedBitSet = new FixedBitSet(3000000);
+            extractedDocs.put(shardId, fixedBitSet);
         }
-        final FixedBitSet fixedBitSet = new FixedBitSet(3000000);
-        extractedDocs.put(shardId, fixedBitSet);
-        return fixedBitSet;
+        return extractedDocs.get(shardId);
     }
     
 }
