@@ -120,7 +120,7 @@ public class QueryPhase implements SearchPhase {
             int numDocs = searchContext.from() + searchContext.size();
 
             if (searchContext.searchType() == SearchType.COUNT || numDocs == 0) {
-                FixedBitSet extractedDocs = transactionContext.getExtractedDocs();
+                FixedBitSet extractedDocs = transactionContext.getExtractedDocs(searchContext.shardTarget().getShardId());
                 UniqueCountCollector collector = new UniqueCountCollector(extractedDocs);
                 searchContext.searcher().search(query, collector);
                 Integer limit = searchContext.limit();

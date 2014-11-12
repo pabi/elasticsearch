@@ -21,10 +21,13 @@ package org.elasticsearch.search.internal;
 
 import org.apache.lucene.util.FixedBitSet;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TransactionContext {
 
     private final long id;
-    private final FixedBitSet extractedDocs = new FixedBitSet(10000000);
+    private final Map<Integer, FixedBitSet> extractedDocs = new HashMap<Integer, FixedBitSet>();
 
     public TransactionContext(long id) {
         this.id = id;
@@ -34,8 +37,13 @@ public class TransactionContext {
         return id;
     }
     
-    public FixedBitSet getExtractedDocs() {
-        return extractedDocs;
+    public FixedBitSet getExtractedDocs(int shardId) {
+        if (extractedDocs.containsKey(shardId)) {
+            return extractedDocs.get(shardId);
+        }
+        final FixedBitSet fixedBitSet = new FixedBitSet(3000000);
+        extractedDocs.put(shardId, fixedBitSet);
+        return fixedBitSet;
     }
     
 }
