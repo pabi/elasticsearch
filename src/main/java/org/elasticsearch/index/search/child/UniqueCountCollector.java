@@ -29,6 +29,7 @@ import java.io.IOException;
 public class UniqueCountCollector extends Collector {
 
     private final FixedBitSet visited;
+    private final FixedBitSet net;
     int docBase;
     
     private int grossCount;
@@ -37,6 +38,7 @@ public class UniqueCountCollector extends Collector {
     
     public UniqueCountCollector(FixedBitSet visited) {
         this.visited = visited;
+        this.net = new FixedBitSet(3000000);
     }
 
     @Override
@@ -50,6 +52,7 @@ public class UniqueCountCollector extends Collector {
         if (!visited.get(docId)) {
             netCount++;
             visited.set(docId);
+            net.set(docId);
         }
     }
 
@@ -61,6 +64,10 @@ public class UniqueCountCollector extends Collector {
     @Override
     public boolean acceptsDocsOutOfOrder() {
         return true;
+    }
+    
+    public FixedBitSet getNet() {
+        return net;
     }
     
     public int getGrossCount() {

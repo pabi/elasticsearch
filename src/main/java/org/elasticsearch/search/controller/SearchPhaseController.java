@@ -321,16 +321,18 @@ public class SearchPhaseController extends AbstractComponent {
         }
         
         int totalNetHits = 0;
-        final ArrayList<FixedBitSet> bitSets = Lists.newArrayList();
+        final ArrayList<FixedBitSet> visitedBitSets = Lists.newArrayList();
+        final ArrayList<FixedBitSet> netBitSets = Lists.newArrayList();
         for (AtomicArray.Entry<? extends QuerySearchResultProvider> entry : queryResults) {
             QuerySearchResult result = entry.value.queryResult();
             totalNetHits += result.getNetCount();
-            bitSets.add(result.getVisited());
+            visitedBitSets.add(result.getVisited());
+            netBitSets.add(result.getNet());
         }
         
         final Integer limit = firstResult.queryResult().getLimit();
         if (limit != null && limit < totalNetHits) {
-            limitExtractedDocs(bitSets, totalNetHits, limit);
+            limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit);
             totalNetHits = limit;
         }
 
@@ -430,7 +432,7 @@ public class SearchPhaseController extends AbstractComponent {
         return new InternalSearchResponse(searchHits, facets, aggregations, suggest, timedOut, terminatedEarly);
     }
     
-    private static void limitExtractedDocs(Collection<FixedBitSet> extractedDocs, int totalNetCount, int limit) {
+    private static void limitExtractedDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, int totalNetCount, int limit) {
         try {
             int removeCount = totalNetCount - limit;
 
@@ -445,12 +447,14 @@ public class SearchPhaseController extends AbstractComponent {
 
             int nextRemove = removesIterator.next();
             int position = 0;
-            for (FixedBitSet fixedBitSet : extractedDocs) {
-                DocIdSetIterator bitSetIterator = fixedBitSet.iterator();
+            for (int i = 0; i < nets.size(); i++) {
+                final FixedBitSet net = nets.get(i);
+                final DocIdSetIterator netIterator = net.iterator();
+                final FixedBitSet visited = visiteds.get(i);
                 
-                while (bitSetIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS && removesIterator.hasNext()) {
+                while (netIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS && removesIterator.hasNext()) {
                     if (position++ == nextRemove) {
-                        fixedBitSet.clear(bitSetIterator.docID());
+                        visited.clear(netIterator.docID());
                         nextRemove = removesIterator.next();
                     }
                 }

@@ -46,16 +46,16 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     private int from;
     private int size;
     private TopDocs topDocs;
-    private long netCount;
     private InternalFacets facets;
     private InternalAggregations aggregations;
     private Suggest suggest;
     private boolean searchTimedOut;
     private Boolean terminatedEarly = null;
     
-    Integer limit;
+    private long netCount;
+    private Integer limit;
     private FixedBitSet visited;
-    
+    private FixedBitSet net;
 
     public QuerySearchResult() {
 
@@ -177,6 +177,14 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     
     public void setVisited(FixedBitSet visited) {
         this.visited = visited;
+    }
+    
+    public FixedBitSet getNet() {
+        return net;
+    }
+    
+    public void setNet(FixedBitSet net) {
+        this.net = net;
     }
 
     public static QuerySearchResult readQuerySearchResult(StreamInput in) throws IOException {
