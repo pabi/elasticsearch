@@ -328,8 +328,11 @@ public class SearchPhaseController extends AbstractComponent {
             totalNetHits += result.getNetCount();
             visitedBitSets.add(result.getVisited());
             netBitSets.add(result.getNet());
+            //System.out.println("BEFORE LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
         }
-        
+        if (firstResult.queryResult().getGroupCreated() != null) {
+            firstResult.queryResult().getGroupCreated().set(false);
+        }
         final Integer limit = firstResult.queryResult().getLimit();
         if (limit != null && limit < totalNetHits) {
             limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit);
@@ -354,6 +357,7 @@ public class SearchPhaseController extends AbstractComponent {
                 }
             }
             
+            //System.out.println("AFTER LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
             
             totalHits += result.topDocs().totalHits;
             if (!Float.isNaN(result.topDocs().getMaxScore())) {
@@ -434,28 +438,21 @@ public class SearchPhaseController extends AbstractComponent {
     
     private static void limitExtractedDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, int totalNetCount, int limit) {
         try {
-            int removeCount = totalNetCount - limit;
-
-            List<Integer> removes = Lists.newArrayListWithCapacity(totalNetCount);
-            for (int i = 0; i < totalNetCount; i++) {
-                removes.add(i);
-            }
-            Collections.shuffle(removes);
-            List<Integer> removesList = removes.subList(0, removeCount);
-            Collections.sort(removesList);
-            final Iterator<Integer> removesIterator = removesList.iterator();
-
-            int nextRemove = removesIterator.next();
-            int position = 0;
+            int remain = totalNetCount;
+            int remove = totalNetCount - limit;
+            
+            final Random random = new Random();
+            
             for (int i = 0; i < nets.size(); i++) {
                 final FixedBitSet net = nets.get(i);
                 final DocIdSetIterator netIterator = net.iterator();
                 final FixedBitSet visited = visiteds.get(i);
                 
-                while (netIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS && removesIterator.hasNext()) {
-                    if (position++ == nextRemove) {
+                while (netIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS && remove > 0) {
+                    if (random.nextInt(remain--) < remove) {
+                        remove--;
                         visited.clear(netIterator.docID());
-                        nextRemove = removesIterator.next();
+                        net.clear(netIterator.docID());
                     }
                 }
             }
