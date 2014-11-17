@@ -22,13 +22,18 @@ package org.elasticsearch.search.internal;
 import org.apache.lucene.util.FixedBitSet;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TransactionContext {
 
     private final long id;
     private final Map<Integer, FixedBitSet> visitedDocs = new HashMap<Integer, FixedBitSet>();
-    private final Map<Integer, FixedBitSet> extractedDocs = new HashMap<Integer, FixedBitSet>();
+    
+    private final AtomicBoolean groupCreated = new AtomicBoolean(false);
+    private final LinkedList<Map<Integer, FixedBitSet>> netDocs = new LinkedList<Map<Integer, FixedBitSet>>();
+    
 
     public TransactionContext(long id) {
         this.id = id;
@@ -42,8 +47,16 @@ public class TransactionContext {
         return getBitSet(shardId, visitedDocs);
     }
     
-    public FixedBitSet getExtractedDocs(int shardId) {
-        return getBitSet(shardId, extractedDocs);
+    public void nextNetDocs(int shardId) {
+        netDocs.pop();
+    }
+    
+    public FixedBitSet getFirstNetDocs(int shardId) {
+        return getBitSet(shardId, netDocs.peek());
+    }
+    
+    public FixedBitSet getLastNetDocs(int shardId) {
+        return getBitSet(shardId, netDocs.peekLast());
     }
     
     private FixedBitSet getBitSet(int shardId, Map<Integer, FixedBitSet> bitsets) {
@@ -54,5 +67,14 @@ public class TransactionContext {
         bitsets.put(shardId, fixedBitSet);
         return fixedBitSet;
     }
+
+    public synchronized void makeNetGroup() {
+        if (groupCreated.compareAndSet(false, true)) {            
+            netDocs.add(new HashMap<Integer, FixedBitSet>());
+        }
+    }
     
+    public AtomicBoolean getGroupCreated() {
+        return groupCreated;
+    }
 }

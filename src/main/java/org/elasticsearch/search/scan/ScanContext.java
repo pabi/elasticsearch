@@ -48,9 +48,12 @@ public class ScanContext {
     }
 
     public TopDocs execute(SearchContext context, TransactionContext transactionContext) throws IOException {
-        final FixedBitSet extractedDocs = transactionContext.getExtractedDocs(context.shardTarget().getShardId());
-        ScanCollector collector = new UniqueScanCollector(readerStates, context.from(), context.size(), context.trackScores(), extractedDocs);
+        final int shardId = context.shardTarget().getShardId();
+        final FixedBitSet netDocs = transactionContext.getFirstNetDocs(shardId);
+//        System.out.println("SCANING BITSET (" + shardId + "): " + netDocs.cardinality() + " in " + netDocs);
+        ScanCollector collector = new UniqueScanCollector(readerStates, context.from(), context.size(), context.trackScores(), netDocs);
         Query query = new XFilteredQuery(context.query(), new ScanFilter(readerStates, collector));
+        
         try {
             context.searcher().search(query, collector);
         } catch (ScanCollector.StopCollectingException e) {
@@ -151,19 +154,21 @@ public class ScanContext {
     }
     
     static class UniqueScanCollector extends ScanCollector {
-        private final FixedBitSet extracted;
+        private final FixedBitSet net;
         
-        public UniqueScanCollector(ConcurrentMap<IndexReader, ReaderState> readerStates, int from, int size, boolean trackScores, FixedBitSet extracted) {
+        public UniqueScanCollector(ConcurrentMap<IndexReader, ReaderState> readerStates, int from, int size, boolean trackScores, FixedBitSet net) {
             super(readerStates, from, size, trackScores);
-            this.extracted = extracted;
+            System.out.println("card: " + net.cardinality());
+            this.net = net;
         }
         
         @Override
         protected boolean shouldAddDoc(int docId) {
-            if (extracted.get(docId)) {
-                return false;
-            }
-            extracted.set(docId);
+            return net.get(docId);
+        }
+
+        @Override
+        public boolean acceptsDocsOutOfOrder() {
             return true;
         }
     }

@@ -115,12 +115,16 @@ public class QueryPhase implements SearchPhase {
             int numDocs = searchContext.from() + searchContext.size();
 
             if (searchContext.searchType() == SearchType.COUNT || numDocs == 0) {
+                transactionContext.makeNetGroup();
                 final int shardId = searchContext.shardTarget().getShardId();
                 FixedBitSet visitedDocs = transactionContext.getVisitedDocs(shardId);
-                UniqueCountCollector collector = new UniqueCountCollector(visitedDocs);
+                FixedBitSet netDocs = transactionContext.getLastNetDocs(shardId);
+                UniqueCountCollector collector = new UniqueCountCollector(visitedDocs, netDocs);
                 searchContext.searcher().search(query, collector);
+//                System.out.println("BITSET (" + shardId + "): " + netDocs.cardinality() + " in " + netDocs);
                 topDocs = new TopDocs(collector.getGrossCount(), Lucene.EMPTY_SCORE_DOCS, 0);
-                searchContext.queryResult().setNet(collector.getNet());
+                searchContext.queryResult().setNet(netDocs);
+                searchContext.queryResult().setGroupCreated(transactionContext.getGroupCreated());
                 searchContext.queryResult().setLimit(searchContext.limit());
                 searchContext.queryResult().setVisited(visitedDocs);
                 searchContext.queryResult().setNetCount(collector.getNetCount());

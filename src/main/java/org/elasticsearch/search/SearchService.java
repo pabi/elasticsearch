@@ -524,8 +524,8 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
         return context;
     }
     
-    private TransactionContext findTransactionContext(long id) {
-        return activeTransactionContexts.get(id);
+    private TransactionContext findTransactionContext(Long id) {
+        return id == null ? null : activeTransactionContexts.get(id);
     }
     
     private long createTransactionContext() {

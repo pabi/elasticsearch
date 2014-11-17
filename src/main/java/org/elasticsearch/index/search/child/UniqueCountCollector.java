@@ -36,9 +36,9 @@ public class UniqueCountCollector extends Collector {
     private int netCount;
     
     
-    public UniqueCountCollector(FixedBitSet visited) {
+    public UniqueCountCollector(FixedBitSet visited, FixedBitSet net) {
         this.visited = visited;
-        this.net = new FixedBitSet(3000000);
+        this.net = net;
     }
 
     @Override
@@ -64,10 +64,6 @@ public class UniqueCountCollector extends Collector {
     @Override
     public boolean acceptsDocsOutOfOrder() {
         return true;
-    }
-    
-    public FixedBitSet getNet() {
-        return net;
     }
     
     public int getGrossCount() {

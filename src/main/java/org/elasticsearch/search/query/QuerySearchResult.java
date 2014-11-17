@@ -32,6 +32,7 @@ import org.elasticsearch.search.facet.InternalFacets;
 import org.elasticsearch.search.suggest.Suggest;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.elasticsearch.common.lucene.Lucene.readTopDocs;
 import static org.elasticsearch.common.lucene.Lucene.writeTopDocs;
@@ -56,6 +57,7 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     private Integer limit;
     private FixedBitSet visited;
     private FixedBitSet net;
+    private AtomicBoolean groupCreated;
 
     public QuerySearchResult() {
 
@@ -185,6 +187,14 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     
     public void setNet(FixedBitSet net) {
         this.net = net;
+    }
+    
+    public AtomicBoolean getGroupCreated() {
+        return groupCreated;
+    }
+    
+    public void setGroupCreated(AtomicBoolean groupCreated) {
+        this.groupCreated = groupCreated;
     }
 
     public static QuerySearchResult readQuerySearchResult(StreamInput in) throws IOException {
