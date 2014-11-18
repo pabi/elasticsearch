@@ -21,6 +21,8 @@ package org.elasticsearch.search.controller;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectObjectOpenHashMap;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
@@ -34,6 +36,7 @@ import org.elasticsearch.common.lucene.Lucene;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.concurrent.AtomicArray;
+import org.elasticsearch.index.search.child.SortLimitedDoc;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.aggregations.InternalAggregation.ReduceContext;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -321,22 +324,29 @@ public class SearchPhaseController extends AbstractComponent {
         }
         
         int totalNetHits = 0;
-        final ArrayList<FixedBitSet> visitedBitSets = Lists.newArrayList();
-        final ArrayList<FixedBitSet> netBitSets = Lists.newArrayList();
+        final List<FixedBitSet> visitedBitSets = Lists.newArrayList();
+        final List<FixedBitSet> netBitSets = Lists.newArrayList();
+        final List<List<SortLimitedDoc>> docValues = Lists.newArrayList();
         for (AtomicArray.Entry<? extends QuerySearchResultProvider> entry : queryResults) {
             QuerySearchResult result = entry.value.queryResult();
             totalNetHits += result.getNetCount();
             visitedBitSets.add(result.getVisited());
             netBitSets.add(result.getNet());
-            //System.out.println("BEFORE LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
+            docValues.add(result.getDocValues());
+//            System.out.println("BEFORE LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
         }
         if (firstResult.queryResult().getGroupCreated() != null) {
             firstResult.queryResult().getGroupCreated().set(false);
         }
         final Integer limit = firstResult.queryResult().getLimit();
         if (limit != null && limit < totalNetHits) {
-            limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit);
+            if (firstResult.queryResult().getSortField() != null) {
+                sortLimitDocs(netBitSets, visitedBitSets, docValues, limit);
+            } else {
+                limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit);
+            }
             totalNetHits = limit;
+            firstResult.queryResult().setLimit(null);
         }
 
         // count the total (we use the query result provider here, since we might not get any hits (we scrolled past them))
@@ -357,7 +367,7 @@ public class SearchPhaseController extends AbstractComponent {
                 }
             }
             
-            //System.out.println("AFTER LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
+//            System.out.println("AFTER LIMITED (" + result.shardTarget().getShardId() + "): " + result.getNet().cardinality() + " in " + result.getNet());
             
             totalHits += result.topDocs().totalHits;
             if (!Float.isNaN(result.topDocs().getMaxScore())) {
@@ -436,6 +446,31 @@ public class SearchPhaseController extends AbstractComponent {
         return new InternalSearchResponse(searchHits, facets, aggregations, suggest, timedOut, terminatedEarly);
     }
     
+    private static void sortLimitDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, List<List<SortLimitedDoc>> docValues, int limit) {
+        final List<SortLimitedDoc> combinedDocsValues = new ArrayList<SortLimitedDoc>();
+        for (List<SortLimitedDoc> docVals : docValues) {
+            combinedDocsValues.addAll(docVals);
+        }
+        Collections.sort(combinedDocsValues);
+        final double breakValue = combinedDocsValues.get(limit).getValue();
+
+        for (int i = 0; i < nets.size(); i++) {
+            final List<SortLimitedDoc> docVal = docValues.get(i);            
+            final Collection<SortLimitedDoc> clearDocs = Collections2.filter(docVal, new Predicate<SortLimitedDoc>() {
+                public boolean apply(SortLimitedDoc input) {
+                    return input.getValue() < breakValue;
+                }
+            });
+            
+            final FixedBitSet net = nets.get(i);
+            final FixedBitSet visited = visiteds.get(i);
+            for (SortLimitedDoc sortLimitedDoc : clearDocs) {
+                visited.clear(sortLimitedDoc.getDocId());
+                net.clear(sortLimitedDoc.getDocId());
+            }
+        }
+    }
+
     private static void limitExtractedDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, int totalNetCount, int limit) {
         try {
             int remain = totalNetCount;

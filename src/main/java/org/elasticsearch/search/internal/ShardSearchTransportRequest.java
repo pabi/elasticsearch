@@ -120,6 +120,11 @@ public class ShardSearchTransportRequest extends TransportRequest implements Sha
     }
     
     @Override
+    public String sortField() {
+        return shardSearchLocalRequest.sortField();
+    }
+    
+    @Override
     public Long transactionId() {
         return shardSearchLocalRequest.transactionId();
     }

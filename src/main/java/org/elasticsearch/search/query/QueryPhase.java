@@ -27,6 +27,8 @@ import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.lucene.Lucene;
+import org.elasticsearch.index.search.child.GrossNetCollector;
+import org.elasticsearch.index.search.child.SortedLimitCollector;
 import org.elasticsearch.index.search.child.UniqueCountCollector;
 import org.elasticsearch.search.SearchParseElement;
 import org.elasticsearch.search.SearchPhase;
@@ -119,13 +121,20 @@ public class QueryPhase implements SearchPhase {
                 final int shardId = searchContext.shardTarget().getShardId();
                 FixedBitSet visitedDocs = transactionContext.getVisitedDocs(shardId);
                 FixedBitSet netDocs = transactionContext.getLastNetDocs(shardId);
-                UniqueCountCollector collector = new UniqueCountCollector(visitedDocs, netDocs);
+                GrossNetCollector collector;
+                if (searchContext.sortField() != null) {
+                    collector = new SortedLimitCollector(visitedDocs, netDocs, searchContext.sortField());
+                    searchContext.queryResult().setDocValues(((SortedLimitCollector)collector).getDocValues());
+                } else {
+                    collector = new UniqueCountCollector(visitedDocs, netDocs);
+                }
+                searchContext.queryResult().setLimit(searchContext.limit());
+                searchContext.queryResult().setSortField(searchContext.sortField());
                 searchContext.searcher().search(query, collector);
 //                System.out.println("BITSET (" + shardId + "): " + netDocs.cardinality() + " in " + netDocs);
                 topDocs = new TopDocs(collector.getGrossCount(), Lucene.EMPTY_SCORE_DOCS, 0);
                 searchContext.queryResult().setNet(netDocs);
                 searchContext.queryResult().setGroupCreated(transactionContext.getGroupCreated());
-                searchContext.queryResult().setLimit(searchContext.limit());
                 searchContext.queryResult().setVisited(visitedDocs);
                 searchContext.queryResult().setNetCount(collector.getNetCount());
             } else if (searchContext.searchType() == SearchType.SCAN) {

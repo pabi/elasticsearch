@@ -71,6 +71,8 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     private Long transactionId;
     
     private Integer limit;
+    
+    private String sortField;
 
     private Scroll scroll;
 
@@ -96,7 +98,8 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     ShardSearchLocalRequest(SearchRequest searchRequest, ShardRouting shardRouting, int numberOfShards,
                             boolean useSlowScroll, String[] filteringAliases, long nowInMillis) {
         this(shardRouting.shardId(), numberOfShards, searchRequest.searchType(),
-                searchRequest.source(), searchRequest.types(), searchRequest.queryCache(), searchRequest.transactionId(), searchRequest.limit());
+                searchRequest.source(), searchRequest.types(), searchRequest.queryCache(),
+                searchRequest.transactionId(), searchRequest.limit(), searchRequest.sortField());
 
         this.extraSource = searchRequest.extraSource();
         this.templateSource = searchRequest.templateSource();
@@ -120,13 +123,14 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     }
 
     public ShardSearchLocalRequest(ShardId shardId, int numberOfShards, SearchType searchType,
-                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId, Integer limit) {
+                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId, Integer limit, String sortField) {
         this.index = shardId.getIndex();
         this.shardId = shardId.id();
         this.numberOfShards = numberOfShards;
         this.searchType = searchType;
         this.transactionId = transactionId;
         this.limit = limit;
+        this.sortField = sortField;
         this.source = source;
         this.types = types;
         this.queryCache = queryCache;
@@ -180,6 +184,11 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     @Override
     public Integer limit() {
         return limit;
+    }
+    
+    @Override
+    public String sortField() {
+        return sortField;
     }
 
     @Override

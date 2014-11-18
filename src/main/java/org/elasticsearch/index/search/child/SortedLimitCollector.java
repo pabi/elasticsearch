@@ -20,57 +20,43 @@
 package org.elasticsearch.index.search.child;
 
 import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.FieldCache;
 import org.apache.lucene.util.FixedBitSet;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class UniqueCountCollector extends GrossNetCollector {
+public class SortedLimitCollector extends UniqueCountCollector {
 
-    private final FixedBitSet visited;
-    private final FixedBitSet net;
-    int docBase;
-    
-    private int grossCount;
-    private int netCount;
-    
-    
-    public UniqueCountCollector(FixedBitSet visited, FixedBitSet net) {
-        this.visited = visited;
-        this.net = net;
-    }
+    private FieldCache.Doubles currentReaderValues;
+    private final String field;
+    private final List<SortLimitedDoc> docValues = new ArrayList<SortLimitedDoc>();
 
-    @Override
-    public void setScorer(Scorer scorer) throws IOException {
+    public SortedLimitCollector(FixedBitSet visited, FixedBitSet net, String field) {
+        super(visited, net);
+        this.field = field;
     }
 
     @Override
     public void collect(int doc) throws IOException {
-        int docId = docBase + doc;
-        grossCount++;
-        if (!visited.get(docId)) {
-            netCount++;
-            visited.set(docId);
-            net.set(docId);
-        }
+        super.collect(doc);
+        double docValue = currentReaderValues.get(doc);
+        docValues.add(new SortLimitedDoc(docBase + doc, docValue));
     }
 
     @Override
     public void setNextReader(AtomicReaderContext context) throws IOException {
-        docBase = context.docBase;
+        super.setNextReader(context);
+        currentReaderValues = getDoubleValues(context, field);
     }
 
-    @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return true;
+    protected FieldCache.Doubles getDoubleValues(AtomicReaderContext context, String field) throws IOException {
+        return FieldCache.DEFAULT.getDoubles(context.reader(), field, null, false);
     }
-    
-    public int getGrossCount() {
-        return grossCount;
-    }
-    
-    public int getNetCount() {
-        return netCount;
+
+    public List<SortLimitedDoc> getDocValues() {
+        return docValues;
     }
 
 }

@@ -92,6 +92,8 @@ public class DefaultSearchContext extends SearchContext {
     private SearchType searchType;
     
     private final Integer limit;
+    
+    private final String sortField;
 
     private final Engine.Searcher engineSearcher;
 
@@ -197,6 +199,7 @@ public class DefaultSearchContext extends SearchContext {
         this.request = request;
         this.searchType = request.searchType();
         this.limit = request.limit();
+        this.sortField = request.sortField();
         this.shardTarget = shardTarget;
         this.engineSearcher = engineSearcher;
         this.scriptService = scriptService;
@@ -295,6 +298,11 @@ public class DefaultSearchContext extends SearchContext {
     @Override
     public Integer limit() {
         return limit;
+    }
+    
+    @Override
+    public String sortField() {
+        return sortField;
     }
 
     public SearchShardTarget shardTarget() {

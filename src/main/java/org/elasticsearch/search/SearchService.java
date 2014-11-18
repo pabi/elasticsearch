@@ -968,7 +968,7 @@ public class SearchService extends AbstractLifecycleComponent<SearchService> {
                         try {
                             long now = System.nanoTime();
                             ShardSearchRequest request = new ShardSearchLocalRequest(indexShard.shardId(), indexMetaData.numberOfShards(),
-                                    SearchType.QUERY_THEN_FETCH, entry.source(), entry.types(), entry.queryCache(), null, null);
+                                    SearchType.QUERY_THEN_FETCH, entry.source(), entry.types(), entry.queryCache(), null, null, null);
                             context = createContext(request, warmerContext.searcher());
                             // if we use sort, we need to do query to sort on it and load relevant field data
                             // if not, we might as well use COUNT (and cache if needed)

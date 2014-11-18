@@ -140,6 +140,11 @@ public class TopHitsContext extends SearchContext {
     public Integer limit() {
         return context.limit();
     }
+    
+    @Override
+    public String sortField() {
+        return context.sortField();
+    }
 
     @Override
     public SearchContext searchType(SearchType searchType) {

@@ -25,7 +25,6 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.common.lucene.docset.AllDocIdSet;
-import org.elasticsearch.common.lucene.search.XFilteredQuery;
 import org.elasticsearch.common.util.concurrent.ConcurrentCollections;
 import org.elasticsearch.search.internal.SearchContext;
 import org.elasticsearch.search.internal.TransactionContext;
@@ -50,16 +49,18 @@ public class ScanContext {
     public TopDocs execute(SearchContext context, TransactionContext transactionContext) throws IOException {
         final int shardId = context.shardTarget().getShardId();
         final FixedBitSet netDocs = transactionContext.getFirstNetDocs(shardId);
-//        System.out.println("SCANING BITSET (" + shardId + "): " + netDocs.cardinality() + " in " + netDocs);
-        ScanCollector collector = new UniqueScanCollector(readerStates, context.from(), context.size(), context.trackScores(), netDocs);
-        Query query = new XFilteredQuery(context.query(), new ScanFilter(readerStates, collector));
+        final ArrayList<ScoreDoc> scoreDocs = new ArrayList<ScoreDoc>();
+        DocIdSetIterator docIdSetIterator = netDocs.iterator();
         
-        try {
-            context.searcher().search(query, collector);
-        } catch (ScanCollector.StopCollectingException e) {
-            // all is well
+        for (int i = 0; i < context.from(); i++) {
+            docIdSetIterator.nextDoc();
         }
-        return collector.topDocs();
+        
+        for (int i = 0; i < context.size() && docIdSetIterator.nextDoc() != DocIdSetIterator.NO_MORE_DOCS; i++) {
+            scoreDocs.add(new ScoreDoc(docIdSetIterator.docID(), 1.0f));
+        }
+        
+        return new TopDocs(scoreDocs.size(), scoreDocs.toArray(new ScoreDoc[scoreDocs.size()]), 1.0f);
     }
     
     static class ScanCollector extends Collector {

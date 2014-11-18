@@ -24,6 +24,7 @@ import org.apache.lucene.util.FixedBitSet;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
+import org.elasticsearch.index.search.child.SortLimitedDoc;
 import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.InternalAggregations;
@@ -32,6 +33,7 @@ import org.elasticsearch.search.facet.InternalFacets;
 import org.elasticsearch.search.suggest.Suggest;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.elasticsearch.common.lucene.Lucene.readTopDocs;
@@ -55,8 +57,10 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     
     private long netCount;
     private Integer limit;
+    private String sortField;
     private FixedBitSet visited;
     private FixedBitSet net;
+    private List<SortLimitedDoc> docValues;
     private AtomicBoolean groupCreated;
 
     public QuerySearchResult() {
@@ -173,6 +177,14 @@ public class QuerySearchResult extends QuerySearchResultProvider {
         this.limit = limit;
     }
     
+    public String getSortField() {
+        return sortField;
+    }
+    
+    public void setSortField(String sortField) {
+        this.sortField = sortField;
+    }
+    
     public FixedBitSet getVisited() {
         return visited;
     }
@@ -187,6 +199,14 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     
     public void setNet(FixedBitSet net) {
         this.net = net;
+    }
+    
+    public List<SortLimitedDoc> getDocValues() {
+        return docValues;
+    }
+    
+    public void setDocValues(List<SortLimitedDoc> docValues) {
+        this.docValues = docValues;
     }
     
     public AtomicBoolean getGroupCreated() {

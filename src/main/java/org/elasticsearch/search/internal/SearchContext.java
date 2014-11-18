@@ -124,6 +124,8 @@ public abstract class SearchContext implements Releasable {
     public abstract SearchType searchType();
 
     public abstract Integer limit();
+    
+    public abstract String sortField();
 
     public abstract SearchContext searchType(SearchType searchType);
 

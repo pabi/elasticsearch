@@ -93,6 +93,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     
     private Long transactionId;
     private Integer limit;
+    private String sortField;
 
     public SearchRequest() {
     }
@@ -122,6 +123,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         this.indicesOptions = searchRequest.indicesOptions;
         this.transactionId = searchRequest.transactionId;
         this.limit = searchRequest.limit;
+        this.sortField = searchRequest.sortField;
     }
 
     /**
@@ -561,6 +563,14 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     
     public void limit(Integer limit) {
         this.limit = limit;
+    }
+    
+    public String sortField() {
+        return sortField;
+    }
+    
+    public void sortField(String sortField) {
+        this.sortField = sortField;
     }
 
     @Override

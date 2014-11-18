@@ -321,6 +321,11 @@ public class PercolateContext extends SearchContext {
     public Integer limit() {
         throw new UnsupportedOperationException();
     }
+    
+    @Override
+    public String sortField() {
+        throw new UnsupportedOperationException();
+    }
 
     @Override
     public SearchContext searchType(SearchType searchType) {

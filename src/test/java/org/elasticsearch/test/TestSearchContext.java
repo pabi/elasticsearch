@@ -141,6 +141,11 @@ public class TestSearchContext extends SearchContext {
     public Integer limit() {
         return null;
     }
+    
+    @Override
+    public String sortField() {
+        return null;
+    }
 
     @Override
     public SearchContext searchType(SearchType searchType) {

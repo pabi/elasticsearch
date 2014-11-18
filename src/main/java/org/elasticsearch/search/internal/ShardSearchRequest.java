@@ -53,6 +53,8 @@ public interface ShardSearchRequest {
     Long transactionId();
     
     Integer limit();
+    
+    String sortField();
 
     String[] filteringAliases();
 

@@ -117,6 +117,8 @@ public class RestSearchAction extends BaseRestHandler {
         if (limit != null) {
             searchRequest.limit(Integer.parseInt(limit));
         }
+        searchRequest.sortField(request.param("sort"));
+        
         searchRequest.queryCache(request.paramAsBoolean("query_cache", null));
 
         String scroll = request.param("scroll");
