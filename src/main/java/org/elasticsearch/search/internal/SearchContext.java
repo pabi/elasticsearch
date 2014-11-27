@@ -123,7 +123,7 @@ public abstract class SearchContext implements Releasable {
 
     public abstract SearchType searchType();
 
-    public abstract Integer limit();
+    public abstract Double limit();
     
     public abstract String sortField();
 

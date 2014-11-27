@@ -338,15 +338,18 @@ public class SearchPhaseController extends AbstractComponent {
         if (firstResult.queryResult().getGroupCreated() != null) {
             firstResult.queryResult().getGroupCreated().set(false);
         }
-        final Integer limit = firstResult.queryResult().getLimit();
+        final Double limit = firstResult.queryResult().getLimit();
         if (limit != null && limit < totalNetHits) {
             if (firstResult.queryResult().getSortField() != null) {
                 sortLimitDocs(netBitSets, visitedBitSets, docValues, limit);
             } else {
-                limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit);
+                limitExtractedDocs(netBitSets, visitedBitSets, totalNetHits, limit.intValue());
             }
-            totalNetHits = limit;
+            totalNetHits = 0;
             firstResult.queryResult().setLimit(null);
+            for (AtomicArray.Entry<? extends QuerySearchResultProvider> entry : queryResults) {
+                totalNetHits += entry.value.queryResult().getNet().cardinality();
+            }
         }
 
         // count the total (we use the query result provider here, since we might not get any hits (we scrolled past them))
@@ -446,19 +449,19 @@ public class SearchPhaseController extends AbstractComponent {
         return new InternalSearchResponse(searchHits, facets, aggregations, suggest, timedOut, terminatedEarly);
     }
     
-    private static void sortLimitDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, List<List<SortLimitedDoc>> docValues, int limit) {
+    private static void sortLimitDocs(List<FixedBitSet> nets, List<FixedBitSet> visiteds, List<List<SortLimitedDoc>> docValues, double limit) {
         final List<SortLimitedDoc> combinedDocsValues = new ArrayList<SortLimitedDoc>();
         for (List<SortLimitedDoc> docVals : docValues) {
             combinedDocsValues.addAll(docVals);
         }
         Collections.sort(combinedDocsValues);
-        final double breakValue = combinedDocsValues.get(limit).getValue();
+        final double threshold = combinedDocsValues.get((int)(combinedDocsValues.size()*limit)).getValue();
 
         for (int i = 0; i < nets.size(); i++) {
             final List<SortLimitedDoc> docVal = docValues.get(i);            
             final Collection<SortLimitedDoc> clearDocs = Collections2.filter(docVal, new Predicate<SortLimitedDoc>() {
                 public boolean apply(SortLimitedDoc input) {
-                    return input.getValue() < breakValue;
+                    return input.getValue() < threshold;
                 }
             });
             

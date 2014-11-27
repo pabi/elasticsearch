@@ -318,7 +318,7 @@ public class PercolateContext extends SearchContext {
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         throw new UnsupportedOperationException();
     }
     

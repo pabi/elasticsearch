@@ -91,7 +91,7 @@ public class DefaultSearchContext extends SearchContext {
 
     private SearchType searchType;
     
-    private final Integer limit;
+    private final Double limit;
     
     private final String sortField;
 
@@ -296,7 +296,7 @@ public class DefaultSearchContext extends SearchContext {
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         return limit;
     }
     

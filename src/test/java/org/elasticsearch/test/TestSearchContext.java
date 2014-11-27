@@ -138,7 +138,7 @@ public class TestSearchContext extends SearchContext {
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         return null;
     }
     

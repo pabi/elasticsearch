@@ -48,7 +48,7 @@ public class ScanContext {
 
     public TopDocs execute(SearchContext context, TransactionContext transactionContext) throws IOException {
         final int shardId = context.shardTarget().getShardId();
-        final FixedBitSet netDocs = transactionContext.getFirstNetDocs(shardId);
+        final FixedBitSet netDocs = transactionContext.getLastNetDocs(shardId);
         final ArrayList<ScoreDoc> scoreDocs = new ArrayList<ScoreDoc>();
         DocIdSetIterator docIdSetIterator = netDocs.iterator();
         

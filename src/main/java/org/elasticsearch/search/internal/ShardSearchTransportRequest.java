@@ -115,7 +115,7 @@ public class ShardSearchTransportRequest extends TransportRequest implements Sha
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         return shardSearchLocalRequest.limit();
     }
     

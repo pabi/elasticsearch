@@ -56,7 +56,7 @@ public class QuerySearchResult extends QuerySearchResultProvider {
     private Boolean terminatedEarly = null;
     
     private long netCount;
-    private Integer limit;
+    private Double limit;
     private String sortField;
     private FixedBitSet visited;
     private FixedBitSet net;
@@ -169,11 +169,11 @@ public class QuerySearchResult extends QuerySearchResultProvider {
         return this;
     }
     
-    public Integer getLimit() {
+    public Double getLimit() {
         return limit;
     }
     
-    public void setLimit(Integer limit) {
+    public void setLimit(Double limit) {
         this.limit = limit;
     }
     

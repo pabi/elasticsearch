@@ -137,7 +137,7 @@ public class TopHitsContext extends SearchContext {
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         return context.limit();
     }
     

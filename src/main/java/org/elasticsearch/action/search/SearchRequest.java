@@ -92,7 +92,7 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
     private IndicesOptions indicesOptions = DEFAULT_INDICES_OPTIONS;
     
     private Long transactionId;
-    private Integer limit;
+    private Double limit;
     private String sortField;
 
     public SearchRequest() {
@@ -557,11 +557,11 @@ public class SearchRequest extends ActionRequest<SearchRequest> implements Indic
         this.transactionId = transactionId;
     }
     
-    public Integer limit() {
+    public Double limit() {
         return limit;
     }
     
-    public void limit(Integer limit) {
+    public void limit(Double limit) {
         this.limit = limit;
     }
     

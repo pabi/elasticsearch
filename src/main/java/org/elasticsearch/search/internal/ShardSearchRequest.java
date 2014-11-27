@@ -52,7 +52,7 @@ public interface ShardSearchRequest {
     
     Long transactionId();
     
-    Integer limit();
+    Double limit();
     
     String sortField();
 

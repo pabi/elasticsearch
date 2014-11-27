@@ -115,7 +115,7 @@ public class RestSearchAction extends BaseRestHandler {
         }
         final String limit = request.param("limit");
         if (limit != null) {
-            searchRequest.limit(Integer.parseInt(limit));
+            searchRequest.limit(Double.parseDouble(limit));
         }
         searchRequest.sortField(request.param("sort"));
         

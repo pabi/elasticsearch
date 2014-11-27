@@ -70,7 +70,7 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     
     private Long transactionId;
     
-    private Integer limit;
+    private Double limit;
     
     private String sortField;
 
@@ -123,7 +123,7 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     }
 
     public ShardSearchLocalRequest(ShardId shardId, int numberOfShards, SearchType searchType,
-                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId, Integer limit, String sortField) {
+                                   BytesReference source, String[] types, Boolean queryCache, Long transactionId, Double limit, String sortField) {
         this.index = shardId.getIndex();
         this.shardId = shardId.id();
         this.numberOfShards = numberOfShards;
@@ -182,7 +182,7 @@ public class ShardSearchLocalRequest implements ShardSearchRequest {
     }
     
     @Override
-    public Integer limit() {
+    public Double limit() {
         return limit;
     }
     
